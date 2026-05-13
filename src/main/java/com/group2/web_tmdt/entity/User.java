@@ -3,6 +3,7 @@ package com.group2.web_tmdt.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -15,8 +16,8 @@ public class User {
     @Column(name="ma_nguoi_dung")
     private long maNguoiDung;
 
-    @Column(name = "ten_dang_nhap")
-    private String tenDangNhap;
+    @Column(name = "email")
+    private String email;
 
     @Column(name = "mat_khau", length = 512)
     private String matKhau;
@@ -27,9 +28,6 @@ public class User {
     @Column(name = "ten")
     private String ten;
 
-    @Column(name = "email")
-    private String email;
-
     @Column(name = "so_dien_thoai")
     private String soDienThoai;
 
@@ -39,8 +37,11 @@ public class User {
     @Column(name = "da_kich_hoat")
     private boolean daKichHoat;
 
-    @Column(name = "ma_kich_hoat")
+    @Column(name = "ma_kich_hoat", unique = true)
     private String maKichHoat;
+
+    @Column(name = "thoi_gian_het_han_ma_kich_hoat")
+    private LocalDateTime thoiGianHetHanMaKichHoat;
 
     @Column(name = "gioi_tinh")
     private char gioiTinh;

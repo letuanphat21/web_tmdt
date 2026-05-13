@@ -9,5 +9,6 @@ public class Endpoints {
 
     public static final String[] PUBLIC_POST_ENDPOINTS = new String[]{
             "/api/auth/dang-ky",
+            "/api/auth/dang-nhap"
     };
 }

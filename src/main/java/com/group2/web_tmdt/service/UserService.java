@@ -1,8 +1,13 @@
 package com.group2.web_tmdt.service;
 
 import com.group2.web_tmdt.dto.RegisterRequest;
+import com.group2.web_tmdt.entity.User;
 
-public interface UserService {
+import java.util.Optional;
+
+import org.springframework.security.core.userdetails.UserDetailsService;
+
+public interface UserService extends UserDetailsService {
 
     /**
      * Đăng ký tài khoản mới.
@@ -14,4 +19,6 @@ public interface UserService {
      * Kích hoạt tài khoản qua mã xác nhận gửi qua email.
      */
     boolean kichHoatTaiKhoan(String maKichHoat);
+
+    Optional<User> findByEmail(String email);
 }

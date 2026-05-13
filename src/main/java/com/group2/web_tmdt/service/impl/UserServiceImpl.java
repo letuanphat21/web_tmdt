@@ -9,6 +9,10 @@ import com.group2.web_tmdt.exception.BusinessException;
 import com.group2.web_tmdt.service.UserService;
 import lombok.RequiredArgsConstructor;
 import com.group2.web_tmdt.service.EmailService;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -82,4 +86,29 @@ public class UserServiceImpl implements UserService {
         return true;
     }
 
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với email: " + email));
+
+        if (!user.isDaKichHoat()) {
+            throw new BusinessException("Tài khoản chưa được kích hoạt");
+        }
+
+        if (!user.isActive()) {
+            throw new BusinessException("Tài khoản đã bị khóa");
+        }
+
+        List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getTenQuyen()))
+                .toList();
+
+        // Này là UserDetail của security nha
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getMatKhau(), authorities);
+    }
 }

@@ -10,4 +10,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     java.util.Optional<com.group2.web_tmdt.entity.User> findByMaKichHoat(String maKichHoat);
+
+    java.util.Optional<com.group2.web_tmdt.entity.User> findByEmail(String email);
 }

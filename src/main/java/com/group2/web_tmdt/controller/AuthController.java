@@ -81,4 +81,44 @@ public class AuthController {
             return ApiResponse.error(HttpStatus.BAD_REQUEST, "Mã kích hoạt không hợp lệ hoặc đã hết hạn.");
         }
     }
+
+    /**
+     * POST /api/auth/refresh-token
+     */
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<JwtAuthResponse>> refreshToken(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
+        
+        if (refreshToken == null || refreshToken.trim().isEmpty()) {
+            return ApiResponse.error(HttpStatus.UNAUTHORIZED, "Không tìm thấy refresh token trong cookie.");
+        }
+
+        try {
+            String email = jwtService.extractEmail(refreshToken);
+            org.springframework.security.core.userdetails.UserDetails userDetails = userService.loadUserByUsername(email);
+
+            if (jwtService.validateToken(refreshToken, userDetails)) {
+                String newToken = jwtService.generateToken(email);
+                String newRefreshToken = jwtService.createRefreshToken(email);
+
+                Cookie cookie = new Cookie("refreshToken", newRefreshToken);
+                cookie.setHttpOnly(true);
+                cookie.setPath("/");
+                cookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngày
+                // cookie.setSecure(true); // Bỏ comment nếu chạy HTTPS
+                response.addCookie(cookie);
+
+                return ApiResponse.ok("Làm mới token thành công!", new JwtAuthResponse(newToken));
+            } else {
+                return ApiResponse.error(HttpStatus.UNAUTHORIZED, "Refresh token không hợp lệ hoặc đã hết hạn.");
+            }
+        } catch (Exception e) {
+            return ApiResponse.error(HttpStatus.UNAUTHORIZED, "Refresh token không hợp lệ hoặc đã hết hạn.");
+        }
+    }
+//    @GetMapping("/test-token")
+//    public ResponseEntity<ApiResponse<Void>> test(){
+//        return ApiResponse.ok("rất thành công");
+//    }
 }

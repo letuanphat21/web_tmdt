@@ -111,6 +111,7 @@ public class UserServiceImpl implements UserService {
         // Này là UserDetail của security nha
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getMatKhau(), authorities);
     }
+
     @Override
     public void quenMatKhau(String email) {
         User user = userRepository.findByEmail(email)
@@ -134,7 +135,8 @@ public class UserServiceImpl implements UserService {
             return false;
         }
 
-        if (user.getThoiGianHetHanMaKichHoat() == null || LocalDateTime.now().isAfter(user.getThoiGianHetHanMaKichHoat())) {
+        if (user.getThoiGianHetHanMaKichHoat() == null
+                || LocalDateTime.now().isAfter(user.getThoiGianHetHanMaKichHoat())) {
             return false;
         }
 
@@ -154,7 +156,8 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("Mã OTP không hợp lệ!");
         }
 
-        if (user.getThoiGianHetHanMaKichHoat() == null || LocalDateTime.now().isAfter(user.getThoiGianHetHanMaKichHoat())) {
+        if (user.getThoiGianHetHanMaKichHoat() == null
+                || LocalDateTime.now().isAfter(user.getThoiGianHetHanMaKichHoat())) {
             throw new BusinessException("Mã OTP đã hết hạn!");
         }
 
@@ -162,5 +165,49 @@ public class UserServiceImpl implements UserService {
         user.setMaKichHoat(null);
         user.setThoiGianHetHanMaKichHoat(null);
         userRepository.save(user);
+    }
+
+    @Override
+    public void processOAuthPostLogin(String email, String name, String avatar, String googleId) {
+        Optional<User> existUser = userRepository.findByEmail(email);
+        if (existUser.isEmpty()) {
+            User newUser = new User();
+            newUser.setEmail(email);
+            // Default random password for OAuth2 users
+            newUser.setMatKhau(passwordEncoder.encode(UUID.randomUUID().toString()));
+            newUser.setTen(name);
+            newUser.setAvatar(avatar);
+            newUser.setGoogleId(googleId);
+            newUser.setDaKichHoat(true); // Automatically activated since Google verified their email
+            newUser.setActive(true);
+
+            Optional<Role> roleUser = roleRepository.findByTenQuyen("ROLE_USER");
+            roleUser.ifPresent(role -> newUser.setRoles(List.of(role)));
+
+            userRepository.save(newUser);
+        } else {
+            User user = existUser.get();
+            boolean needUpdate = false;
+
+            // Update avatar if provided and user doesn't have one
+            if (avatar != null && !avatar.isEmpty() && (user.getAvatar() == null || user.getAvatar().isEmpty())) {
+                user.setAvatar(avatar);
+                needUpdate = true;
+            }
+            // Update googleId if it's missing
+            if (googleId != null && !googleId.isEmpty()
+                    && (user.getGoogleId() == null || user.getGoogleId().isEmpty())) {
+                user.setGoogleId(googleId);
+                needUpdate = true;
+            }
+            if(name !=null && !name.isEmpty() && (user.getTen() == null || user.getTen().isEmpty())) {
+                user.setTen(name);
+                needUpdate = true;
+            }
+
+            if (needUpdate) {
+                userRepository.save(user);
+            }
+        }
     }
 }

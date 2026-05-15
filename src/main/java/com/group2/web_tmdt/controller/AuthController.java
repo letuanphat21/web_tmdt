@@ -121,4 +121,24 @@ public class AuthController {
 //    public ResponseEntity<ApiResponse<Void>> test(){
 //        return ApiResponse.ok("rất thành công");
 //    }
+
+    /**
+     * POST /api/auth/dang-xuat
+     */
+    @PostMapping("/dang-xuat")
+    public ResponseEntity<ApiResponse<Void>> dangXuat(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
+        
+        if (refreshToken != null && !refreshToken.trim().isEmpty()) {
+            Cookie cookie = new Cookie("refreshToken", "");
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0); // Hết hạn ngay lập tức để xóa cookie
+            // cookie.setSecure(true); // Bỏ comment nếu chạy HTTPS
+            response.addCookie(cookie);
+        }
+
+        return ApiResponse.ok("Đăng xuất thành công!");
+    }
 }

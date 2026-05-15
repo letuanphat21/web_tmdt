@@ -16,4 +16,8 @@ public class Endpoints {
     public static final String[] PRIVATE_GET_ENDPOINT = new String[]{
 
     };
+
+    public static final String[] PRIVATE_POST_ENDPOINT = new String[]{
+            "/api/auth/dang-xuat"
+    };
 }

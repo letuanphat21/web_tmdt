@@ -111,4 +111,56 @@ public class UserServiceImpl implements UserService {
         // Này là UserDetail của security nha
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getMatKhau(), authorities);
     }
+    @Override
+    public void quenMatKhau(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng với email: " + email));
+
+        // Generate 6-digit OTP
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        user.setMaKichHoat(otp);
+        user.setThoiGianHetHanMaKichHoat(LocalDateTime.now().plusHours(24));
+        userRepository.save(user);
+
+        emailService.guiEmailQuenMatKhau(email, otp);
+    }
+
+    @Override
+    public boolean xacNhanOtp(String email, String otp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng với email: " + email));
+
+        if (user.getMaKichHoat() == null || !user.getMaKichHoat().equals(otp)) {
+            return false;
+        }
+
+        if (user.getThoiGianHetHanMaKichHoat() == null || LocalDateTime.now().isAfter(user.getThoiGianHetHanMaKichHoat())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void datLaiMatKhau(com.group2.web_tmdt.dto.ResetPasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException("Mật khẩu xác nhận không khớp!");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng với email: " + request.getEmail()));
+
+        if (user.getMaKichHoat() == null || !user.getMaKichHoat().equals(request.getOtp())) {
+            throw new BusinessException("Mã OTP không hợp lệ!");
+        }
+
+        if (user.getThoiGianHetHanMaKichHoat() == null || LocalDateTime.now().isAfter(user.getThoiGianHetHanMaKichHoat())) {
+            throw new BusinessException("Mã OTP đã hết hạn!");
+        }
+
+        user.setMatKhau(passwordEncoder.encode(request.getNewPassword()));
+        user.setMaKichHoat(null);
+        user.setThoiGianHetHanMaKichHoat(null);
+        userRepository.save(user);
+    }
 }

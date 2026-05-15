@@ -21,4 +21,10 @@ public interface UserService extends UserDetailsService {
     boolean kichHoatTaiKhoan(String maKichHoat);
 
     Optional<User> findByEmail(String email);
+
+    void quenMatKhau(String email);
+
+    boolean xacNhanOtp(String email, String otp);
+
+    void datLaiMatKhau(com.group2.web_tmdt.dto.ResetPasswordRequest request);
 }

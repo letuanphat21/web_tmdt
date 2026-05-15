@@ -26,7 +26,7 @@ public class ChiTietDonHang {
             CascadeType.REFRESH,
             CascadeType.PERSIST,
     })
-    @JoinColumn(name = "ma_sach",nullable = false)
+    @JoinColumn(name = "ma_san_pham",nullable = false)
     private Product product;
 
     @ManyToOne(cascade = {

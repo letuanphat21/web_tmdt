@@ -5,6 +5,8 @@ public class Endpoints {
 
         public static final String[] PUBLIC_GET_ENDPOINTS = new String[] {
                         "/api/auth/kich-hoat",
+                        "/api/home/**",
+                        "/api/oauth2/**",
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {

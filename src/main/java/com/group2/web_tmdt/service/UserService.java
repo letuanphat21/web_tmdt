@@ -27,4 +27,6 @@ public interface UserService extends UserDetailsService {
     boolean xacNhanOtp(String email, String otp);
 
     void datLaiMatKhau(com.group2.web_tmdt.dto.ResetPasswordRequest request);
+
+    void processOAuthPostLogin(String email, String name, String avatar, String googleId);
 }

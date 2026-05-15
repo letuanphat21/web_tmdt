@@ -3,7 +3,6 @@ package com.group2.web_tmdt.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
@@ -14,10 +13,7 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
-    @Pattern(
-            regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$",
-            message = "Mật khẩu tối thiểu 8 ký tự, ít nhất một chữ cái và một số"
-    )
+    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$", message = "Mật khẩu tối thiểu 8 ký tự, ít nhất một chữ cái và một số")
     private String password;
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")

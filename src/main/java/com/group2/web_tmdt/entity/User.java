@@ -53,6 +53,9 @@ public class User {
     @Column (name ="active")
     private boolean active;
 
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = {
             CascadeType.PERSIST,
             CascadeType.MERGE,

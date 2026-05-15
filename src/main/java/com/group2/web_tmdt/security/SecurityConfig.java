@@ -64,10 +64,10 @@ public class SecurityConfig {
 
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // Tắt CSRF vì React gửi request từ domain khác
+
         http.csrf(AbstractHttpConfigurer::disable);
 
-        // Cấu hình CORS cho phép React (localhost:3000) gọi API
+
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();

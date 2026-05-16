@@ -7,6 +7,7 @@ public class Endpoints {
                         "/api/auth/kich-hoat",
                         "/api/home/**",
                         "/api/oauth2/**",
+                        "/api/users/profile"
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {
@@ -24,5 +25,9 @@ public class Endpoints {
 
         public static final String[] PRIVATE_POST_ENDPOINT = new String[] {
                         "/api/auth/dang-xuat"
+        };
+
+        public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {
+                        "/api/user/profile"
         };
 }

@@ -1,6 +1,8 @@
 package com.group2.web_tmdt.service;
 
 import com.group2.web_tmdt.dto.RegisterRequest;
+import com.group2.web_tmdt.dto.UpdateProfileRequest;
+import com.group2.web_tmdt.dto.UserProfileResponse;
 import com.group2.web_tmdt.entity.User;
 
 import java.util.Optional;
@@ -29,4 +31,8 @@ public interface UserService extends UserDetailsService {
     void datLaiMatKhau(com.group2.web_tmdt.dto.ResetPasswordRequest request);
 
     void processOAuthPostLogin(String email, String name, String avatar, String googleId);
+
+    UserProfileResponse getProfile(String email);
+
+    UserProfileResponse updateProfile(String email, UpdateProfileRequest request);
 }

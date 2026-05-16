@@ -3,6 +3,8 @@ package com.group2.web_tmdt.service.impl;
 import com.group2.web_tmdt.dao.RoleRepository;
 import com.group2.web_tmdt.dao.UserRepository;
 import com.group2.web_tmdt.dto.RegisterRequest;
+import com.group2.web_tmdt.dto.UpdateProfileRequest;
+import com.group2.web_tmdt.dto.UserProfileResponse;
 import com.group2.web_tmdt.entity.Role;
 import com.group2.web_tmdt.entity.User;
 import com.group2.web_tmdt.exception.BusinessException;
@@ -54,6 +56,7 @@ public class UserServiceImpl implements UserService {
         user.setActive(true);
         user.setMaKichHoat(maKichHoat);
         user.setThoiGianHetHanMaKichHoat(thoiGianHetHan);
+        user.setNgayDangKy(LocalDateTime.now());
 
         // Gán quyền USER mặc định (maQuyen = 2, hoặc tìm theo tên)
         Optional<Role> roleUser = roleRepository.findByTenQuyen("ROLE_USER");
@@ -180,6 +183,7 @@ public class UserServiceImpl implements UserService {
             newUser.setGoogleId(googleId);
             newUser.setDaKichHoat(true); // Automatically activated since Google verified their email
             newUser.setActive(true);
+            newUser.setNgayDangKy(LocalDateTime.now());
 
             Optional<Role> roleUser = roleRepository.findByTenQuyen("ROLE_USER");
             roleUser.ifPresent(role -> newUser.setRoles(List.of(role)));
@@ -210,4 +214,67 @@ public class UserServiceImpl implements UserService {
             }
         }
     }
+
+    @Override
+    public UserProfileResponse getProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng với email: " + email));
+        return mapToProfileResponse(user);
+    }
+
+    @Override
+    public UserProfileResponse updateProfile(String email, UpdateProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng với email: " + email));
+
+        if (request.getAvatar() != null) {
+            user.setAvatar(request.getAvatar());
+        }
+        if (request.getHoDem() != null) {
+            user.setHoDem(request.getHoDem());
+        }
+        if (request.getTen() != null) {
+            user.setTen(request.getTen());
+        }
+        if (request.getBirthDay() != null) {
+            user.setBirthDay(request.getBirthDay());
+        }
+        if (request.getGioiTinh() != null) {
+            user.setGioiTinh(request.getGioiTinh());
+        }
+        if (request.getDiaChi() != null) {
+            user.setDiaChi(request.getDiaChi());
+        }
+        if (request.getSoDienThoai() != null) {
+            user.setSoDienThoai(request.getSoDienThoai());
+        }
+        if (request.getHobby() != null) {
+            user.setHobby(request.getHobby());
+        }
+
+        userRepository.save(user);
+        return mapToProfileResponse(user);
+    }
+
+    // ----------------------------------------------------------------
+    // Helper
+    // ----------------------------------------------------------------
+
+    private UserProfileResponse mapToProfileResponse(User user) {
+        UserProfileResponse res = new UserProfileResponse();
+        res.setEmail(user.getEmail());
+        res.setHoDem(user.getHoDem());
+        res.setTen(user.getTen());
+        res.setSoDienThoai(user.getSoDienThoai());
+        res.setDiaChi(user.getDiaChi());
+        res.setGioiTinh(user.getGioiTinh());
+        res.setAvatar(user.getAvatar());
+        res.setHobby(user.getHobby());
+        res.setGoogleId(user.getGoogleId());
+        res.setBirthDay(user.getBirthDay());
+        res.setNgayDangKy(user.getNgayDangKy());
+        res.setThoiGianChinhSua(user.getThoiGianChinhSua());
+        return res;
+    }
 }
+

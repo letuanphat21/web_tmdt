@@ -34,7 +34,6 @@ build/
 **/application-dev.properties
 **/application-oauth2.properties
 
-uploads/
 node_modules/
 target/
 

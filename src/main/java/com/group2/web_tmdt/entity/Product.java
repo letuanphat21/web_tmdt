@@ -43,6 +43,15 @@ public class Product {
     @JoinColumn(name = "ma_the_loai",nullable = false)
     private Category category;
 
+    @ManyToOne(cascade = {
+            CascadeType.DETACH,
+            CascadeType.REFRESH,
+            CascadeType.MERGE,
+            CascadeType.PERSIST,
+    })
+    @JoinColumn(name = "ma_tinh_trang")
+    private TinhTrang tinhTrang;
+
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = {
             CascadeType.REFRESH,
             CascadeType.MERGE,

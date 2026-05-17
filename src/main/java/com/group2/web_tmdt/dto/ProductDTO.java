@@ -23,6 +23,10 @@ public class ProductDTO {
 
     private int maTheLoai;
 
+    private String tenTinhTrang; // Tên tình trạng sản phẩm
+
+    private int maTinhTrang; // ID tình trạng sản phẩm
+
     private String email; // Email của người bán
 
     private long maNguoiBan; // ID người bán

@@ -7,7 +7,11 @@ public class Endpoints {
                         "/api/auth/kich-hoat",
                         "/api/home/**",
                         "/api/oauth2/**",
-                        "/api/users/profile"
+                        "/api/users/profile",
+                        "/api/files/**",
+                        "/api/products/search",
+                        "/api/categories/**",
+                        "/api/statuses/**"
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {

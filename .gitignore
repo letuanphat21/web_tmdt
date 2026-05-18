@@ -33,3 +33,8 @@ build/
 .vscode/
 **/application-dev.properties
 **/application-oauth2.properties
+
+node_modules/
+target/
+
+sample_data.sql

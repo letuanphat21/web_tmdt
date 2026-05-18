@@ -2,10 +2,7 @@ package com.group2.web_tmdt.service.impl;
 
 import com.group2.web_tmdt.dao.ProductRepository;
 import com.group2.web_tmdt.dto.ProductDTO;
-import com.group2.web_tmdt.dto.ReviewDTO;
-import com.group2.web_tmdt.entity.HinhAnh;
 import com.group2.web_tmdt.entity.Product;
-import com.group2.web_tmdt.entity.Review;
 import com.group2.web_tmdt.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -58,68 +55,49 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
+                                           Double minPrice, Double maxPrice, Pageable pageable) {
+        return productRepository.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, pageable)
+                .map(this::convertToDTO);
+    }
+
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
         dto.setMaSanPham(product.getMaSanPham());
         dto.setTenSanPham(product.getTenSanPham());
-        dto.setSoLuong(product.getSoLuong());
         dto.setGiaSanPham(product.getGiaSanPham());
-
+        dto.setSoLuong(product.getSoLuong());
+        dto.setTenNguoiBan(product.getUser().getEmail());
+        dto.setMaNguoiBan(product.getUser().getMaNguoiDung());
+        dto.setEmail(product.getUser().getEmail());
+        
+        // Set category info
         if (product.getCategory() != null) {
             dto.setTenTheLoai(product.getCategory().getTenTheLoai());
             dto.setMaTheLoai(product.getCategory().getMaTheLoai());
         }
-
-        if (product.getUser() != null) {
-            dto.setEmail(product.getUser().getEmail());
-            dto.setMaNguoiBan(product.getUser().getMaNguoiDung());
-            String tenNguoiBan = (product.getUser().getHoDem() != null ? product.getUser().getHoDem() : "")
-                    + " " + (product.getUser().getTen() != null ? product.getUser().getTen() : "");
-            dto.setTenNguoiBan(tenNguoiBan.trim());
-            dto.setHinhAnhDaiDien(product.getUser().getAvatar());
-        }
-
-        // Tính trung bình đánh giá
-        if (product.getReviews() != null && !product.getReviews().isEmpty()) {
-            double avgRating = product.getReviews().stream()
-                    .mapToDouble(Review::getDiemXepHang)
-                    .average()
-                    .orElse(0.0);
-            dto.setDanhGia(avgRating);
-            dto.setSoLuongDanhGia(product.getReviews().size());
-
-            // Map danh sách đánh giá chi tiết
-            List<ReviewDTO> reviewDTOs = product.getReviews().stream()
-                    .map(review -> {
-                        ReviewDTO r = new ReviewDTO();
-                        r.setMaDanhGia(review.getMaDanhGia());
-                        r.setDiemXepHang(review.getDiemXepHang());
-                        r.setNhanXet(review.getNhanXet());
-                        if (review.getUser() != null) {
-                            r.setEmailNguoiDung(review.getUser().getEmail());
-                            String ten = (review.getUser().getHoDem() != null ? review.getUser().getHoDem() : "")
-                                    + " " + (review.getUser().getTen() != null ? review.getUser().getTen() : "");
-                            r.setTenNguoiDung(ten.trim());
-                            r.setAvatarNguoiDung(review.getUser().getAvatar());
-                        }
-                        return r;
-                    })
-                    .collect(Collectors.toList());
-            dto.setDanhGias(reviewDTOs);
-        } else {
-            dto.setDanhGia(0.0);
-            dto.setSoLuongDanhGia(0);
-            dto.setDanhGias(Collections.emptyList());
+        
+        // Set status info
+        if (product.getTinhTrang() != null) {
+            dto.setMaTinhTrang(product.getTinhTrang().getMaTinhTrang());
+            dto.setTenTinhTrang(product.getTinhTrang().getTenTinhTrang());
         }
 
         // Map danh sách hình ảnh sản phẩm
         if (product.getHinhAnhs() != null && !product.getHinhAnhs().isEmpty()) {
             List<String> hinhAnhs = product.getHinhAnhs().stream()
-                    .map(HinhAnh::getDuLieuAnh)
+                    .map(hinhAnh -> hinhAnh.getDuongDan())
                     .collect(Collectors.toList());
             dto.setHinhAnhs(hinhAnhs);
+            
+            // Lấy ảnh đầu tiên của SẢN PHẨM làm ảnh đại diện
+            if (!hinhAnhs.isEmpty()) {
+                dto.setHinhAnhDaiDien(hinhAnhs.get(0));
+            }
         } else {
             dto.setHinhAnhs(Collections.emptyList());
+            dto.setHinhAnhDaiDien(null);
         }
 
         return dto;

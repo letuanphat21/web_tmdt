@@ -32,4 +32,10 @@ public interface ProductService {
      * Lấy sản phẩm của người bán
      */
     List<ProductDTO> getProductsBySeller(long sellerId);
+
+    /**
+     * Tìm kiếm sản phẩm với bộ lọc kết hợp
+     */
+    Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
+                                    Double minPrice, Double maxPrice, Pageable pageable);
 }

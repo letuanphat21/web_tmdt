@@ -22,6 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/home")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class HomeController {
 
     private final ProductService productService;

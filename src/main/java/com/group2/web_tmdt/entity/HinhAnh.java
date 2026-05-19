@@ -16,7 +16,8 @@ public class HinhAnh {
     @Column(name ="ten_hinh_anh")
     private String tenHinhAnh;
 
-    @Column(name = "duong_dan")
+    @Column(name = "duong_dan", columnDefinition = "LONGTEXT")
+    @Lob
     private String duongDan;
 
     @Column(name = "du_lieu_anh",columnDefinition = "LONGTEXT")

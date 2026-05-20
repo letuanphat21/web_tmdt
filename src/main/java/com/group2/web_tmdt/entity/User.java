@@ -73,12 +73,7 @@ public class User {
         @Column(name = "birth_date")
         private LocalDate birthDay;
 
-        @ManyToMany(fetch = FetchType.EAGER, cascade = {
-                        CascadeType.PERSIST,
-                        CascadeType.MERGE,
-                        CascadeType.REFRESH,
-                        CascadeType.DETACH
-        })
+        @ManyToMany(fetch = FetchType.EAGER)
         @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "ma_nguoi_dung"), inverseJoinColumns = @JoinColumn(name = "ma_quyen"))
         private List<Role> roles;
 
@@ -86,7 +81,7 @@ public class User {
                         CascadeType.REFRESH,
                         CascadeType.MERGE,
                         CascadeType.DETACH,
-                        CascadeType.REFRESH,
+
         })
         private List<Product> products;
 
@@ -94,15 +89,14 @@ public class User {
                         CascadeType.REFRESH,
                         CascadeType.MERGE,
                         CascadeType.DETACH,
-                        CascadeType.REFRESH,
+
         })
         private List<Review> reviews;
 
         @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = {
                         CascadeType.REFRESH,
                         CascadeType.MERGE,
-                        CascadeType.DETACH,
-                        CascadeType.REFRESH,
+                CascadeType.DETACH,
         })
         private List<DonHang> donHangs;
 

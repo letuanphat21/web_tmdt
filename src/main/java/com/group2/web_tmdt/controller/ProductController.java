@@ -99,16 +99,41 @@ public class ProductController {
     }
 
     @PutMapping("/{productId}/active")
-    public ResponseEntity<ApiResponse<Void>> activeProduct(@PathVariable Long productId){
-            productService.activeProduct(productId);
-            return ApiResponse.ok("Đã active sản phẩm thành công");
+    public ResponseEntity<ApiResponse<Void>> activeProduct(
+            @PathVariable Long productId,
+            Authentication authentication) {
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
+        productService.activeProduct(productId, authentication.getName(), isAdmin);
+        return ApiResponse.ok("Đã active sản phẩm thành công");
     }
 
     @PutMapping("/{productId}/deactive")
-    public ResponseEntity<ApiResponse<Void>> deactiveProduct(@PathVariable Long productId){
-        productService.deactiveProduct(productId);
+    public ResponseEntity<ApiResponse<Void>> deactiveProduct(
+            @PathVariable Long productId,
+            Authentication authentication) {
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
+        productService.deactiveProduct(productId, authentication.getName(), isAdmin);
         return ApiResponse.ok("Đã deactive sản phẩm thành công");
     }
 
+    @PutMapping("/{productId}")
+    public ResponseEntity<ApiResponse<Void>> updateProduct(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductUpdateRequest request,
+            Authentication authentication) {
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
+        productService.updateProduct(productId, request, authentication.getName(), isAdmin);
+
+        return ApiResponse.ok("Cập nhật sản phẩm thành công");
+    }
 
 }

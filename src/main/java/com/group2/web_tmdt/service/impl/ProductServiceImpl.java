@@ -444,7 +444,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void verifyCanManageProduct(Product product, User user, boolean isAdmin) {
-        boolean isOwner = product.getUser().getMaNguoiDung().equals(user.getMaNguoiDung());
+        boolean isOwner = product.getUser().getMaNguoiDung()== user.getMaNguoiDung();
         if (!isAdmin && !isOwner) {
             throw new BusinessException(
                     HttpStatus.FORBIDDEN,

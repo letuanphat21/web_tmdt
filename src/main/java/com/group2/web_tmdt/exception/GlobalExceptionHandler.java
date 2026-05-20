@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import org.springframework.security.authentication.BadCredentialsException;
 import java.util.List;
 
 /**
@@ -67,4 +67,27 @@ public class GlobalExceptionHandler {
         ex.printStackTrace(); // In log để debug
         return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống, vui lòng thử lại sau.");
     }
+
+    /**
+     * Bắt lỗi về bad creditial là thông tin lỗi đăng nhập bị sai
+     *
+     * Ví dụ JSON trả về:
+     * {
+     *   {
+     *   "success": false,
+     *   "message": "Email hoặc mật khẩu không đúng."
+     * }
+     * }
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(
+            BadCredentialsException ex
+    ) {
+
+        return ApiResponse.error(
+                HttpStatus.UNAUTHORIZED,
+                "Email hoặc mật khẩu không đúng."
+        );
+    }
+
 }

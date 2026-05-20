@@ -14,7 +14,7 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="ma_san_pham")
-    private long maSanPham;
+    private Long maSanPham;
 
     @Column(name = "ten_san_pham",length = 256)
     private String tenSanPham;
@@ -24,6 +24,33 @@ public class Product {
 
     @Column(name="gia_san_pham")
     private double giaSanPham;
+
+    @Column(name = "thuong_hieu")
+    private String thuongHieu;
+
+    @Column(name = "mo_ta")
+    private String moTa;
+
+    @Column(name = "mau_sac")
+    private String mauSac;
+
+    @Column(name = "kich_co")
+    private String kichCo;
+
+    @Column(name = "active")
+    private boolean active;
+
+    @Column(name = "soLuongDaBan")
+    private int soLuongDaBan;
+
+    @ManyToOne(cascade = {
+            CascadeType.DETACH,
+            CascadeType.REFRESH,
+            CascadeType.MERGE,
+            CascadeType.PERSIST,
+    })
+    @JoinColumn(name = "ma_trang_thai",nullable = false)
+    private TrangThaiSanPham trangThaiSanPham;
 
     @ManyToOne(cascade = {
             CascadeType.DETACH,

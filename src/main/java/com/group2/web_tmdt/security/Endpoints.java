@@ -20,20 +20,37 @@ public class Endpoints {
                         "/api/auth/refresh-token",
                         "/api/auth/quen-mat-khau",
                         "/api/auth/xac-nhan-otp",
-                        "/api/auth/dat-lai-mat-khau"
+                        "/api/auth/dat-lai-mat-khau",
+
+
         };
 
+
+
         public static final String[] PRIVATE_GET_ENDPOINT = new String[] {
-                        "/api/cart"
+                        "/api/cart",
+                        "/api/products/seller",
         };
 
         public static final String[] PRIVATE_POST_ENDPOINT = new String[] {
                         "/api/auth/dang-xuat",
-                        "/api/cart/add"
+                        "/api/cart/add",
+                        "/api/products/post",
         };
 
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {
                         "/api/user/profile",
-                        "/api/cart/item/**"
+                        "/api/cart/item/**",
+                        "api/products/*/active",
+                        "api/products/*/deactive",
+        };
+
+        public static final String[] ADMIN_PUT_ENDPOINTS = new String[] {
+                "/api/products/*/approve",
+                "/api/products/*/reject",
+        };
+
+        public static final String[] ADMIN_GET_ENDPOINTS = new String[] {
+                "/api/products/pending",
         };
 }

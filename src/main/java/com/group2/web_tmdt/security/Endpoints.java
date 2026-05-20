@@ -41,8 +41,9 @@ public class Endpoints {
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {
                         "/api/user/profile",
                         "/api/cart/item/**",
-                        "api/products/*/active",
-                        "api/products/*/deactive",
+                        "/api/products/*",
+                        "/api/products/*/active",
+                        "/api/products/*/deactive",
         };
 
         public static final String[] ADMIN_PUT_ENDPOINTS = new String[] {

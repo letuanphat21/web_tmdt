@@ -51,7 +51,9 @@ public interface ProductService {
 
     Page<ProductSellerDTO> getProductsByUser(String email,Pageable pageable);
 
-    void activeProduct(Long id);
+    void activeProduct(Long id, String email, boolean isAdmin);
 
-    void deactiveProduct(Long id);
+    void deactiveProduct(Long id, String email, boolean isAdmin);
+
+    void updateProduct(Long productId, ProductUpdateRequest request, String email, boolean isAdmin);
 }

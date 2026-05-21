@@ -30,12 +30,15 @@ public class Endpoints {
         public static final String[] PRIVATE_GET_ENDPOINT = new String[] {
                         "/api/cart",
                         "/api/products/seller",
+                        "/api/orders",
+                        "/api/orders/**",
         };
 
         public static final String[] PRIVATE_POST_ENDPOINT = new String[] {
                         "/api/auth/dang-xuat",
                         "/api/cart/add",
                         "/api/products/post",
+                        "/api/orders",
         };
 
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {
@@ -44,6 +47,7 @@ public class Endpoints {
                         "/api/products/*",
                         "/api/products/*/active",
                         "/api/products/*/deactive",
+                        "/api/orders/*/cancel",
         };
 
         public static final String[] ADMIN_PUT_ENDPOINTS = new String[] {

@@ -20,6 +20,10 @@ public class ChiTietDonHang {
     @Column(name = "gia_ban")
     private double giaBan;
 
+    // Cột ma_sach tồn tại trong DB (từ schema cũ), set default 0 để tránh NOT NULL constraint
+    @Column(name = "ma_sach", columnDefinition = "BIGINT DEFAULT 0")
+    private Long maSach = 0L;
+
     @ManyToOne(cascade = {
             CascadeType.DETACH,
             CascadeType.MERGE,

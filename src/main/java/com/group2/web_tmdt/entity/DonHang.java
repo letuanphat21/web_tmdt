@@ -32,6 +32,12 @@ public class DonHang {
     @Column(name = "tong_tien")
     private double tongTien;
 
+    @Column(name = "trang_thai", length = 50)
+    private String trangThai;
+
+    @Column(name = "ly_do_huy", length = 512)
+    private String lyDoHuy;
+
     @ManyToOne(cascade = {
             CascadeType.DETACH,
             CascadeType.REFRESH,

@@ -28,13 +28,14 @@ public class DonHangController {
         double chiPhiGiaoHang = body.containsKey("chiPhiGiaoHang")
                 ? ((Number) body.get("chiPhiGiaoHang")).doubleValue()
                 : 30000;
+        String phuongThucThanhToan = (String) body.getOrDefault("phuongThucThanhToan", "COD");
 
         if (diaChi == null || diaChi.isBlank()) {
             return ApiResponse.error(HttpStatus.BAD_REQUEST, "Vui lòng nhập địa chỉ nhận hàng");
         }
 
         DonHangDTO donHang = donHangService.taoDoHang(
-                userDetails.getUsername(), diaChi, chiPhiGiaoHang);
+                userDetails.getUsername(), diaChi, chiPhiGiaoHang, phuongThucThanhToan);
         return ApiResponse.ok("Đặt hàng thành công!", donHang);
     }
 

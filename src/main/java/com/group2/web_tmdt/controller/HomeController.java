@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -63,8 +65,13 @@ public class HomeController {
      */
     @GetMapping("/products/newest")
     public ResponseEntity<ApiResponse<List<ProductDTO>>> getNewestProducts(
-            @RequestParam(defaultValue = "10") int limit) {
-        List<ProductDTO> products = productService.getNewestProducts(limit);
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String excludeEmail) {
+        String finalExcludeEmail = (excludeEmail != null && !excludeEmail.isBlank())
+                ? excludeEmail
+                : (userDetails != null ? userDetails.getUsername() : null);
+        List<ProductDTO> products = productService.getNewestProducts(limit, finalExcludeEmail);
         return ApiResponse.ok("Lấy sản phẩm mới đăng thành công!", products);
     }
 
@@ -78,10 +85,15 @@ public class HomeController {
      */
     @GetMapping("/products/best-selling")
     public ResponseEntity<ApiResponse<Page<ProductDTO>>> getBestSellingProducts(
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String excludeEmail) {
+        String finalExcludeEmail = (excludeEmail != null && !excludeEmail.isBlank())
+                ? excludeEmail
+                : (userDetails != null ? userDetails.getUsername() : null);
         Pageable pageable = PageRequest.of(page, size);
-        Page<ProductDTO> products = productService.getBestSellingProducts(pageable);
+        Page<ProductDTO> products = productService.getBestSellingProducts(pageable, finalExcludeEmail);
         return ApiResponse.ok("Lấy sản phẩm bán chạy nhất thành công!", products);
     }
 

@@ -1,6 +1,7 @@
 package com.group2.web_tmdt.service;
 
 import com.group2.web_tmdt.dto.DonHangDTO;
+import com.group2.web_tmdt.dto.PageResponse;
 
 import java.util.List;
 
@@ -17,4 +18,23 @@ public interface DonHangService {
 
     /** Hủy đơn hàng (chỉ được hủy khi đang "Chờ xác nhận") */
     DonHangDTO huyDonHang(String email, int maDonHang, String lyDoHuy);
+
+    /** Lấy danh sách đơn hàng mà người dùng là người bán (dựa trên sản phẩm trong đơn hàng) */
+    List<DonHangDTO> getSellOrdersOfSeller(String email, String trangThai);
+
+    /** Người bán xác nhận đơn hàng → chuyển trạng thái "Chờ duyệt" → "Đã duyệt" */
+    DonHangDTO xacNhanDonHang(String sellerEmail, int maDonHang);
+
+    /** Người bán hủy đơn hàng → chuyển trạng thái "Chờ duyệt" → "Đã hủy" */
+    DonHangDTO huyDonHangBySeller(String sellerEmail, int maDonHang, String lyDoHuy);
+
+    /** Admin: Lấy tất cả đơn hàng với filter trạng thái + phân trang */
+    PageResponse<DonHangDTO> getAllOrdersForAdmin(String status, int page, int size);
+
+    /** Admin: Xác nhận đơn hàng (không cần check seller) */
+    DonHangDTO adminConfirmOrder(int maDonHang);
+
+    /** Admin: Hủy đơn hàng */
+    DonHangDTO adminCancelOrder(int maDonHang, String lyDoHuy);
 }
+

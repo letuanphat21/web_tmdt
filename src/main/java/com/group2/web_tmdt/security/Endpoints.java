@@ -11,7 +11,8 @@ public class Endpoints {
                         "/api/files/**",
                         "/api/products/search",
                         "/api/categories/**",
-                        "/api/statuses/**"
+                        "/api/statuses/**",
+                        "/api/payment/vnpay/ipn",   // VNPAY IPN: server-to-server, không cần auth
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {
@@ -39,6 +40,7 @@ public class Endpoints {
                         "/api/cart/add",
                         "/api/products/post",
                         "/api/orders",
+                        "/api/payment/vnpay/create-payment",  // Tạo URL thanh toán VNPAY
         };
 
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {

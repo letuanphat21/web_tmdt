@@ -43,7 +43,7 @@ public class DonHangServiceImpl implements DonHangService {
 
     @Override
     @Transactional
-    public DonHangDTO taoDoHang(String email, String diaChiNhanHang, double chiPhiGiaoHang) {
+    public DonHangDTO taoDoHang(String email, String diaChiNhanHang, double chiPhiGiaoHang, String phuongThucThanhToan) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
@@ -73,6 +73,7 @@ public class DonHangServiceImpl implements DonHangService {
         TrangThaiDonHang trangThai = trangThaiDonHangRepository.findByTenTrangThai("Chờ duyệt")
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Chờ duyệt'"));
         donHang.setTrangThaiDonHang(trangThai);
+        donHang.setPhuongThucThanhToan(phuongThucThanhToan != null ? phuongThucThanhToan : "COD");
         donHang = donHangRepository.save(donHang);
 
         // Tạo chi tiết đơn hàng
@@ -159,6 +160,7 @@ public class DonHangServiceImpl implements DonHangService {
         dto.setTongTien(dh.getTongTien());
         dto.setTrangThai(dh.getTrangThaiDonHang() != null ? dh.getTrangThaiDonHang().getTenTrangThai() : "");
         dto.setLyDoHuy(dh.getLyDoHuy());
+        dto.setPhuongThucThanhToan(dh.getPhuongThucThanhToan());
         
         // Set tên khách hàng (người mua)
         if (dh.getUser() != null) {
@@ -177,9 +179,13 @@ public class DonHangServiceImpl implements DonHangService {
                 ctDTO.setSoLuong(ct.getSoLuong());
                 ctDTO.setGiaBan(ct.getGiaBan());
                 ctDTO.setThanhTien(ct.getGiaBan() * ct.getSoLuong());
-                // Lấy hình ảnh đầu tiên
+                // Lấy hình ảnh đầu tiên — ưu tiên duongDan (Supabase URL), fallback duLieuAnh (base64)
                 if (ct.getProduct().getHinhAnhs() != null && !ct.getProduct().getHinhAnhs().isEmpty()) {
-                    ctDTO.setHinhAnh(ct.getProduct().getHinhAnhs().get(0).getDuLieuAnh());
+                    var hinhAnh = ct.getProduct().getHinhAnhs().get(0);
+                    String imgUrl = hinhAnh.getDuongDan() != null && !hinhAnh.getDuongDan().isBlank()
+                            ? hinhAnh.getDuongDan()
+                            : hinhAnh.getDuLieuAnh();
+                    ctDTO.setHinhAnh(imgUrl);
                 }
                 ctDTOs.add(ctDTO);
             }

@@ -48,4 +48,23 @@ public class EmailServiceImpl implements EmailService {
         );
         mailSender.send(message);
     }
+
+    @Override
+    public void guiEmailTuChoi(String toEmail, String lyDo) {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(toEmail);
+        message.setSubject("Thông báo từ chối sản phẩm");
+
+        message.setText(
+                "Xin chào,\n\n" +
+                        "Sản phẩm của bạn đã bị từ chối bởi hệ thống kiểm duyệt.\n\n" +
+                        "Lý do từ chối: " + lyDo + "\n\n" +
+                        "Vui lòng kiểm tra và cập nhật lại thông tin sản phẩm trước khi gửi duyệt lại.\n\n" +
+                        "Trân trọng,\n" +
+                        "Đội ngũ quản trị."
+        );
+
+        mailSender.send(message);
+    }
 }

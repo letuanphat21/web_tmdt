@@ -30,7 +30,11 @@ public class ProductSellerDTO {
 
     private String trangThai;
 
+    private Integer maTheLoai;
+
     private String theLoai;
+
+    private Integer maTinhTrang;
 
     private String tinhTrang;
 

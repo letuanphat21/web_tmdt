@@ -28,4 +28,6 @@ public class DonHangDTO {
     private String lyDoHuy;
 
     private List<ChiTietDonHangDTO> chiTiet;
+
+    private String tenKhachHang; // Tên khách hàng (người mua)
 }

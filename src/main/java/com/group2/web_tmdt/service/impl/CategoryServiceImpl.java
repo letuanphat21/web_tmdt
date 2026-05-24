@@ -41,9 +41,12 @@ public class CategoryServiceImpl implements CategoryService {
         dto.setMaTheLoai(category.getMaTheLoai());
         dto.setTenTheLoai(category.getTenTheLoai());
         
-        // Tính số sản phẩm trong danh mục
+        // Tính số sản phẩm active=1 và ma_trang_thai=2 trong danh mục
         if (category.getProducts() != null) {
-            dto.setSoSanPham(category.getProducts().size());
+            long activeProducts = category.getProducts().stream()
+                    .filter(p -> p.isActive() && p.getTrangThaiSanPham() != null && p.getTrangThaiSanPham().getId() == 2)
+                    .count();
+            dto.setSoSanPham((int) activeProducts);
         } else {
             dto.setSoSanPham(0);
         }

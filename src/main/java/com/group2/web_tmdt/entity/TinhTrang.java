@@ -12,7 +12,7 @@ public class TinhTrang {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ma_tinh_trang")
-    private int maTinhTrang;
+    private Integer maTinhTrang;
 
     @Column(name = "ten_tinh_trang", nullable = false, unique = true, length = 100)
     private String tenTinhTrang;

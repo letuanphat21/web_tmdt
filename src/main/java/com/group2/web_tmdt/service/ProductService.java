@@ -9,14 +9,14 @@ import java.util.List;
 public interface ProductService {
 
     /**
-     * Lấy danh sách sản phẩm mới nhất
+     * Lấy danh sách sản phẩm mới nhất, loại trừ sản phẩm của người bán đang đăng nhập (nếu có)
      */
-    List<ProductDTO> getNewestProducts(int limit);
+    List<ProductDTO> getNewestProducts(int limit, String excludeEmail);
 
     /**
-     * Lấy danh sách sản phẩm bán chạy nhất
+     * Lấy danh sách sản phẩm bán chạy nhất, loại trừ sản phẩm của người bán đang đăng nhập (nếu có)
      */
-    Page<ProductDTO> getBestSellingProducts(Pageable pageable);
+    Page<ProductDTO> getBestSellingProducts(Pageable pageable, String excludeEmail);
 
     /**
      * Lấy sản phẩm theo ID

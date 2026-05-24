@@ -55,6 +55,16 @@ public class DonHangController {
                 userDetails.getUsername(), maDonHang, lyDoHuy);
         return ApiResponse.ok("Hủy đơn hàng thành công!", donHang);
     }
+
+    @GetMapping("/sell-orders")
+    public ResponseEntity<ApiResponse<List<DonHangDTO>>> getSellOrders(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(value = "status", defaultValue = "all") String trangThai) {
+        List<DonHangDTO> orders = donHangService.getSellOrdersOfSeller(
+                userDetails.getUsername(), trangThai);
+        return ApiResponse.ok("Lấy danh sách đơn bán thành công!", orders);
+    }
+
     @GetMapping("/{maDonHang}")
     public ResponseEntity<ApiResponse<DonHangDTO>> getDonHangById(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -63,4 +73,25 @@ public class DonHangController {
                 userDetails.getUsername(), maDonHang);
         return ApiResponse.ok("Lấy chi tiết đơn hàng thành công!", donHang);
     }
+
+    @PutMapping("/{maDonHang}/seller-confirm")
+    public ResponseEntity<ApiResponse<DonHangDTO>> xacNhanDonHang(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable int maDonHang) {
+        DonHangDTO donHang = donHangService.xacNhanDonHang(
+                userDetails.getUsername(), maDonHang);
+        return ApiResponse.ok("Xác nhận đơn hàng thành công!", donHang);
+    }
+
+    @PutMapping("/{maDonHang}/seller-cancel")
+    public ResponseEntity<ApiResponse<DonHangDTO>> huyDonHangBySeller(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable int maDonHang,
+            @RequestBody Map<String, Object> body) {
+        String lyDoHuy = (String) body.getOrDefault("lyDoHuy", "Người bán hủy đơn");
+        DonHangDTO donHang = donHangService.huyDonHangBySeller(
+                userDetails.getUsername(), maDonHang, lyDoHuy);
+        return ApiResponse.ok("Hủy đơn hàng thành công!", donHang);
+    }
 }
+

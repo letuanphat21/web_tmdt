@@ -37,17 +37,17 @@ public class ProductServiceImpl implements ProductService {
     private final ProductAdminMapper productAdminMapper;
 
     @Override
-    public List<ProductDTO> getNewestProducts(int limit) {
-        return productRepository.findAll().stream()
-                .sorted((p1, p2) -> Long.compare(p2.getMaSanPham(), p1.getMaSanPham()))
-                .limit(limit)
+    public List<ProductDTO> getNewestProducts(int limit, String excludeEmail) {
+        // Optimize: Limit and filter at DB level instead of loading all products into memory
+        return productRepository.findNewestProducts(excludeEmail, org.springframework.data.domain.PageRequest.of(0, limit))
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Page<ProductDTO> getBestSellingProducts(Pageable pageable) {
-        return productRepository.findBestSellingProducts(pageable)
+    public Page<ProductDTO> getBestSellingProducts(Pageable pageable, String excludeEmail) {
+        return productRepository.findBestSellingProducts(excludeEmail, pageable)
                 .map(this::convertToDTO);
     }
 

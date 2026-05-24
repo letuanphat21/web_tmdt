@@ -88,15 +88,32 @@ public class ProductController {
     }
 
     @GetMapping("/seller")
-    public ResponseEntity<ApiResponse<Page<ProductSellerDTO>>> getProductsAllForSeller(@RequestParam(defaultValue = "0") int page,
-                                                                     @RequestParam(defaultValue = "5") int size,Authentication authentication){
+    public ResponseEntity<ApiResponse<Page<ProductSellerDTO>>> getProductsAllForSeller(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(defaultValue = "ALL") SellerListingFilter filter,
+            Authentication authentication) {
         String email = authentication.getName();
         Pageable pageable = PageRequest.of(page, size);
         Page<ProductSellerDTO> products =
-                productService.getProductsByUser(email, pageable);
+                productService.getProductsByUser(email, filter, pageable);
 
-        return  ApiResponse.ok("Lấy danh sách thành công",products);
+        return ApiResponse.ok("Lấy danh sách thành công", products);
     }
+
+    @GetMapping("/admin")
+    public ResponseEntity<ApiResponse<Page<ProductAdminDTO>>> getProductsAllForAdmin(@RequestParam(defaultValue = "0") int page,
+                                                                                     @RequestParam(defaultValue = "6") int size,
+                                                                                     @RequestParam(defaultValue = "ALL") SellerListingFilter filter
+                                                                                     ){
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProductAdminDTO> products = productService.getProductsForAdmin(pageable,filter);
+
+        return ApiResponse.ok("Lấy danh sách thành công", products);
+    }
+
+
+
 
     @PutMapping("/{productId}/active")
     public ResponseEntity<ApiResponse<Void>> activeProduct(
@@ -134,6 +151,21 @@ public class ProductController {
         productService.updateProduct(productId, request, authentication.getName(), isAdmin);
 
         return ApiResponse.ok("Cập nhật sản phẩm thành công");
+    }
+    @GetMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductSellerDTO>> getProduct(
+            @PathVariable Long productId,
+            Authentication authentication
+    ){
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
+        ProductSellerDTO product = productService.getProductForManagement(
+                productId,
+                isAdmin
+        );
+
+        return ApiResponse.ok("Lấy sản phẩm thành công", product);
     }
 
 }

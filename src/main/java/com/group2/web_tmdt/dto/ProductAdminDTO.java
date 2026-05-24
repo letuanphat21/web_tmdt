@@ -1,5 +1,6 @@
 package com.group2.web_tmdt.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,10 +8,9 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class ProductPendingDTO {
-
+@AllArgsConstructor
+public class ProductAdminDTO {
     private Long maSanPham;
 
     private String tenSanPham;
@@ -23,6 +23,7 @@ public class ProductPendingDTO {
 
     private String trangThai;
 
-    private List<ProductImageResponse> images;
+    private boolean active;
 
+    private ProductImageResponse images;
 }

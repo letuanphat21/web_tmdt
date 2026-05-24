@@ -20,9 +20,9 @@ public class ProductSellerMapper {
             return null;
         }
 
-        List<ProductImageSeller> images =
-                product.getHinhAnhs()
-                        .stream()
+        List<ProductImageSeller> images = product.getHinhAnhs() == null
+                ? List.of()
+                : product.getHinhAnhs().stream()
                         .map(productImageSellerMapper::toDTO)
                         .toList();
 
@@ -35,13 +35,14 @@ public class ProductSellerMapper {
                 product.getMoTa(),
                 product.getMauSac(),
                 product.getKichCo(),
-                product.getCategory().getTenTheLoai(),
-                product.getTinhTrang().getTenTinhTrang(),
                 product.getTrangThaiSanPham().getTenTrangThai(),
+                product.getCategory().getMaTheLoai(),
+                product.getCategory().getTenTheLoai(),
+                product.getTinhTrang().getMaTinhTrang(),
+                product.getTinhTrang().getTenTinhTrang(),
                 product.isActive(),
                 product.getSoLuongDaBan(),
                 images
-
         );
     }
 }

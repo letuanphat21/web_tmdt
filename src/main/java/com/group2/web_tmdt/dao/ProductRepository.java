@@ -78,5 +78,36 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByTrangThaiSanPham(TrangThaiSanPham trangThaiSanPham, Pageable pageable);
 
     Page<Product> findByUser(User user, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.trangThaiSanPham.tenTrangThai = 'PENDING'")
+    Page<Product> findPendingByUser(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.active = true AND p.soLuong > 0")
+    Page<Product> findActiveListingsByUser(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.soLuong <= 0")
+    Page<Product> findSoldOutByUser(@Param("user") User user, Pageable pageable);
+
+
+
+
+
+//    Admin
+    @Query("SELECT p FROM Product p WHERE p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.active = true AND p.soLuong > 0")
+    Page<Product> findProductsActive(Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE  p.trangThaiSanPham.tenTrangThai = 'PENDING'")
+    Page<Product> findProductsPending(Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE  p.trangThaiSanPham.tenTrangThai = 'REJECTED'")
+    Page<Product> findProductsRejected(Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.soLuong <= 0")
+    Page<Product> findProductSoldOut( Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.active = false")
+    Page<Product> findProductsDeactive(Pageable pageable);
+
+
 }
 

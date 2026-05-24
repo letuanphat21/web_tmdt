@@ -4,6 +4,7 @@ import com.group2.web_tmdt.dao.*;
 import com.group2.web_tmdt.dto.*;
 import com.group2.web_tmdt.entity.*;
 import com.group2.web_tmdt.exception.BusinessException;
+import com.group2.web_tmdt.mapper.ProductAdminMapper;
 import com.group2.web_tmdt.mapper.ProductMapper;
 import com.group2.web_tmdt.mapper.ProductSellerMapper;
 import com.group2.web_tmdt.service.EmailService;
@@ -33,6 +34,7 @@ public class ProductServiceImpl implements ProductService {
     private final EmailService emailService;
     private final ProductMapper productMapper;
     private final ProductSellerMapper productSellerMapper;
+    private final ProductAdminMapper productAdminMapper;
 
     @Override
     public List<ProductDTO> getNewestProducts(int limit) {
@@ -222,7 +224,7 @@ public class ProductServiceImpl implements ProductService {
         // Save
         productRepository.save(product);
 
-        emailService.guiEmailKichHoat(user.getEmail(),request.getLyDo() );
+        emailService.guiEmailTuChoi(user.getEmail(),request.getLyDo() );
     }
 
     @Override
@@ -239,10 +241,33 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSellerDTO> getProductsByUser(String email, Pageable pageable) {
-        User user =  userRepository.findByEmail(email).orElseThrow(() -> new BusinessException("Không tim thấy người dùng"));
-        Page<Product> products = productRepository.findByUser(user, pageable);
+    @Transactional(readOnly = true)
+    public Page<ProductSellerDTO> getProductsByUser(String email, SellerListingFilter filter, Pageable pageable) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
+
+        Page<Product> products = switch (filter == null ? SellerListingFilter.ALL : filter) {
+            case ACTIVE -> productRepository.findActiveListingsByUser(user, pageable);
+            case PENDING -> productRepository.findPendingByUser(user, pageable);
+            case SOLD_OUT -> productRepository.findSoldOutByUser(user, pageable);
+            default -> productRepository.findByUser(user, pageable);
+        };
+
         return products.map(productSellerMapper::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductAdminDTO> getProductsForAdmin(Pageable pageable, SellerListingFilter filter) {
+        Page<Product> products =switch (filter == null ? SellerListingFilter.ALL : filter){
+            case ACTIVE -> productRepository.findProductsActive(pageable);
+            case PENDING -> productRepository.findProductsPending(pageable);
+            case REJECTED -> productRepository.findProductsRejected(pageable);
+            case DEACTIVE -> productRepository.findProductsDeactive(pageable);
+            case SOLD_OUT -> productRepository.findProductSoldOut(pageable);
+            default -> productRepository.findAll(pageable);
+        };
+        return products.map(productAdminMapper:: toDTO);
     }
 
     @Override
@@ -284,6 +309,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void updateProduct(Long productId, ProductUpdateRequest request, String email, boolean isAdmin) {
+        System.out.println(request);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new BusinessException(
@@ -442,6 +468,16 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(product);
     }
+
+    @Override
+    public ProductSellerDTO getProductForManagement(long productId, boolean isAdmin) {
+        Product product = null;
+        if(isAdmin){
+            product = productRepository.findById(productId).get();
+        }
+        return productSellerMapper.toDTO(product);
+    }
+
 
     private void verifyCanManageProduct(Product product, User user, boolean isAdmin) {
         boolean isOwner = product.getUser().getMaNguoiDung()== user.getMaNguoiDung();

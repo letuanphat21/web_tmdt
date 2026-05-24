@@ -49,11 +49,15 @@ public interface ProductService {
 
     Page<ProductPendingDTO>  getPendingProducts(Pageable pageable);
 
-    Page<ProductSellerDTO> getProductsByUser(String email,Pageable pageable);
+    Page<ProductSellerDTO> getProductsByUser(String email, SellerListingFilter filter, Pageable pageable);
 
     void activeProduct(Long id, String email, boolean isAdmin);
 
     void deactiveProduct(Long id, String email, boolean isAdmin);
 
     void updateProduct(Long productId, ProductUpdateRequest request, String email, boolean isAdmin);
+
+    ProductSellerDTO getProductForManagement(long productId, boolean isAdmin);
+
+    Page<ProductAdminDTO> getProductsForAdmin(Pageable pageable,SellerListingFilter filter);
 }

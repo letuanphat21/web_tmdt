@@ -65,8 +65,11 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, Endpoints.PUBLIC_GET_ENDPOINTS).permitAll()
                 .requestMatchers(HttpMethod.POST, Endpoints.PUBLIC_POST_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.GET, Endpoints.PRIVATE_GET_ENDPOINT).authenticated()
+                .requestMatchers(HttpMethod.POST, Endpoints.PRIVATE_POST_ENDPOINT).authenticated()
+                .requestMatchers(HttpMethod.PUT, Endpoints.PRIVATE_PUT_ENDPOINT).authenticated()
                 .requestMatchers(HttpMethod.PUT, Endpoints.ADMIN_PUT_ENDPOINTS).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET,Endpoints.ADMIN_GET_ENDPOINTS).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINTS).hasRole("ADMIN")
                 .anyRequest().authenticated());
 
         // IF_REQUIRED: OAuth2 cần session tạm thời trong lúc redirect Google
@@ -100,9 +103,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of(Endpoints.front_end_host,Endpoints.front_end_host2));
+        config.setAllowedOrigins(List.of(Endpoints.front_end_host));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Content-Type", "Authorization", "X-Requested-With", "Accept"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

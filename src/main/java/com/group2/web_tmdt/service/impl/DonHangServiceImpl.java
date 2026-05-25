@@ -9,10 +9,6 @@ import com.group2.web_tmdt.dao.UserRepository;
 import com.group2.web_tmdt.dto.ChiTietDonHangDTO;
 import com.group2.web_tmdt.dto.DonHangDTO;
 import com.group2.web_tmdt.dto.PageResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.group2.web_tmdt.entity.ChiTietDonHang;
 import com.group2.web_tmdt.entity.DonHang;
 import com.group2.web_tmdt.entity.GioHang;
@@ -20,14 +16,21 @@ import com.group2.web_tmdt.entity.GioHangItem;
 import com.group2.web_tmdt.entity.TrangThaiDonHang;
 import com.group2.web_tmdt.entity.User;
 import com.group2.web_tmdt.service.DonHangService;
+import com.group2.web_tmdt.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,10 +43,24 @@ public class DonHangServiceImpl implements DonHangService {
     private final GioHangItemRepository gioHangItemRepository;
     private final UserRepository userRepository;
     private final TrangThaiDonHangRepository trangThaiDonHangRepository;
+    private final EmailService emailService;
 
+    /**
+     * Tạo đơn hàng — chia theo từng seller.
+     *
+     * Luồng:
+     * 1. Lấy giỏ hàng của user
+     * 2. Group items theo seller (product.user)
+     * 3. Mỗi seller → tạo 1 DonHang riêng
+     * 4. Tất cả đơn con dùng chung maDonHangCha (= maDonHang của đơn đầu tiên)
+     * 5. Gửi email thông báo cho từng seller (async)
+     * 6. Xóa giỏ hàng
+     * 7. Trả về list tất cả đơn con
+     */
     @Override
     @Transactional
-    public DonHangDTO taoDoHang(String email, String diaChiNhanHang, double chiPhiGiaoHang, String phuongThucThanhToan) {
+    public List<DonHangDTO> taoDoHang(String email, String diaChiNhanHang,
+                                       double chiPhiGiaoHang, String phuongThucThanhToan) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
@@ -55,46 +72,110 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Giỏ hàng không có sản phẩm");
         }
 
-        // Tính tổng tiền sản phẩm
-        double tongTienSanPham = items.stream()
-                .mapToDouble(i -> i.getProduct().getGiaSanPham() * i.getSoLuong())
-                .sum();
-
-        // Tạo đơn hàng
-        DonHang donHang = new DonHang();
-        donHang.setUser(user);
-        donHang.setNgayTao(Date.valueOf(LocalDate.now()));
-        donHang.setDiaChiNhanHang(diaChiNhanHang);
-        donHang.setChiPhiGiaoHang(chiPhiGiaoHang);
-        donHang.setTongTienSanPham(tongTienSanPham);
-        donHang.setTongTien(tongTienSanPham + chiPhiGiaoHang);
-        
-        // Lấy trạng thái "Chờ duyệt"
         TrangThaiDonHang trangThai = trangThaiDonHangRepository.findByTenTrangThai("Chờ duyệt")
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Chờ duyệt'"));
-        donHang.setTrangThaiDonHang(trangThai);
-        donHang.setPhuongThucThanhToan(phuongThucThanhToan != null ? phuongThucThanhToan : "COD");
-        donHang = donHangRepository.save(donHang);
 
-        // Tạo chi tiết đơn hàng
-        List<ChiTietDonHang> chiTietList = new ArrayList<>();
-        for (GioHangItem item : items) {
-            ChiTietDonHang ct = new ChiTietDonHang();
-            ct.setDonHang(donHang);
-            ct.setProduct(item.getProduct());
-            ct.setSoLuong(item.getSoLuong());
-            ct.setGiaBan(item.getProduct().getGiaSanPham());
-            // ma_sach là FK tới product, set bằng ma_san_pham của sản phẩm
-            ct.setMaSach(item.getProduct().getMaSanPham());
-            chiTietList.add(ct);
+        // ── Group items theo seller ──────────────────────────────────────────
+        Map<Long, List<GioHangItem>> itemsBySeller = items.stream()
+                .collect(Collectors.groupingBy(
+                        i -> i.getProduct().getUser().getMaNguoiDung(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        // Chia phí giao hàng đều cho từng đơn con
+        double chiPhiMoiDon = itemsBySeller.size() > 0
+                ? chiPhiGiaoHang / itemsBySeller.size()
+                : chiPhiGiaoHang;
+
+        String phuongThuc = phuongThucThanhToan != null ? phuongThucThanhToan : "COD";
+
+        // Tên người mua để gửi email
+        String tenNguoiMua = buildTenNguoiDung(user);
+
+        List<DonHang> savedDonHangs = new ArrayList<>();
+        List<List<ChiTietDonHang>> savedChiTiets = new ArrayList<>();
+        Integer maDonHangCha = null;
+
+        for (Map.Entry<Long, List<GioHangItem>> entry : itemsBySeller.entrySet()) {
+            List<GioHangItem> sellerItems = entry.getValue();
+            User seller = sellerItems.get(0).getProduct().getUser();
+
+            double tongTienSanPham = sellerItems.stream()
+                    .mapToDouble(i -> i.getProduct().getGiaSanPham() * i.getSoLuong())
+                    .sum();
+
+            // Tạo đơn hàng cho seller này
+            DonHang donHang = new DonHang();
+            donHang.setUser(user);
+            donHang.setNgayTao(Date.valueOf(LocalDate.now()));
+            donHang.setDiaChiNhanHang(diaChiNhanHang);
+            donHang.setChiPhiGiaoHang(chiPhiMoiDon);
+            donHang.setTongTienSanPham(tongTienSanPham);
+            donHang.setTongTien(tongTienSanPham + chiPhiMoiDon);
+            donHang.setTrangThaiDonHang(trangThai);
+            donHang.setPhuongThucThanhToan(phuongThuc);
+            donHang.setMaDonHangCha(maDonHangCha); // null cho đơn đầu tiên
+
+            donHang = donHangRepository.save(donHang);
+
+            // Đơn đầu tiên → dùng id của nó làm maDonHangCha cho tất cả
+            if (maDonHangCha == null) {
+                maDonHangCha = donHang.getMaDonHang();
+                donHang.setMaDonHangCha(maDonHangCha);
+                donHang = donHangRepository.save(donHang);
+            }
+
+            // Tạo chi tiết đơn hàng
+            List<ChiTietDonHang> chiTietList = new ArrayList<>();
+            for (GioHangItem item : sellerItems) {
+                ChiTietDonHang ct = new ChiTietDonHang();
+                ct.setDonHang(donHang);
+                ct.setProduct(item.getProduct());
+                ct.setSoLuong(item.getSoLuong());
+                ct.setGiaBan(item.getProduct().getGiaSanPham());
+                ct.setMaSach(item.getProduct().getMaSanPham());
+                chiTietList.add(ct);
+            }
+            chiTietDonHangRepository.saveAll(chiTietList);
+
+            savedDonHangs.add(donHang);
+            savedChiTiets.add(chiTietList);
+
+            // ── Gửi email cho seller (async — không block transaction) ────────
+            try {
+                StringBuilder chiTietText = new StringBuilder();
+                for (GioHangItem item : sellerItems) {
+                    chiTietText.append("  - ")
+                            .append(item.getProduct().getTenSanPham())
+                            .append(" x").append(item.getSoLuong())
+                            .append(" (").append(String.format("%,.0f", item.getProduct().getGiaSanPham()))
+                            .append(" VND)\n");
+                }
+                emailService.guiEmailDonHangMoiChoSeller(
+                        seller.getEmail(),
+                        tenNguoiMua,
+                        donHang.getMaDonHang(),
+                        diaChiNhanHang,
+                        donHang.getTongTien(),
+                        chiTietText.toString()
+                );
+            } catch (Exception e) {
+                // Lỗi email không được làm rollback transaction
+                System.err.println("[EMAIL ERROR] Seller " + seller.getEmail() + ": " + e.getMessage());
+            }
         }
-        chiTietDonHangRepository.saveAll(chiTietList);
 
-        // Xóa giỏ hàng sau khi đặt
+        // Xóa giỏ hàng sau khi tạo đơn thành công
         gioHangItemRepository.deleteAll(items);
         gioHangItemRepository.flush();
 
-        return convertToDTO(donHang, chiTietList);
+        // Build kết quả trả về
+        List<DonHangDTO> result = new ArrayList<>();
+        for (int i = 0; i < savedDonHangs.size(); i++) {
+            result.add(convertToDTO(savedDonHangs.get(i), savedChiTiets.get(i)));
+        }
+        return result;
     }
 
     @Override
@@ -137,7 +218,8 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Không có quyền hủy đơn hàng này");
         }
 
-        if (donHang.getTrangThaiDonHang() == null || !"Chờ duyệt".equals(donHang.getTrangThaiDonHang().getTenTrangThai())) {
+        if (donHang.getTrangThaiDonHang() == null
+                || !"Chờ duyệt".equals(donHang.getTrangThaiDonHang().getTenTrangThai())) {
             throw new RuntimeException("Chỉ có thể hủy đơn hàng đang ở trạng thái 'Chờ duyệt'");
         }
 
@@ -150,85 +232,27 @@ public class DonHangServiceImpl implements DonHangService {
         return convertToDTO(donHang, donHang.getChiTietDonHangs());
     }
 
-    private DonHangDTO convertToDTO(DonHang dh, List<ChiTietDonHang> chiTietList) {
-        DonHangDTO dto = new DonHangDTO();
-        dto.setMaDonHang(dh.getMaDonHang());
-        dto.setNgayTao(dh.getNgayTao() != null ? dh.getNgayTao().toString() : "");
-        dto.setDiaChiNhanHang(dh.getDiaChiNhanHang());
-        dto.setChiPhiGiaoHang(dh.getChiPhiGiaoHang());
-        dto.setTongTienSanPham(dh.getTongTienSanPham());
-        dto.setTongTien(dh.getTongTien());
-        dto.setTrangThai(dh.getTrangThaiDonHang() != null ? dh.getTrangThaiDonHang().getTenTrangThai() : "");
-        dto.setLyDoHuy(dh.getLyDoHuy());
-        dto.setPhuongThucThanhToan(dh.getPhuongThucThanhToan());
-        
-        // Set tên khách hàng (người mua)
-        if (dh.getUser() != null) {
-            dto.setTenKhachHang(dh.getUser().getTen() != null ? dh.getUser().getTen() : dh.getUser().getEmail());
-        } else {
-            dto.setTenKhachHang("Khách hàng");
-        }
-
-        List<ChiTietDonHangDTO> ctDTOs = new ArrayList<>();
-        if (chiTietList != null) {
-            for (ChiTietDonHang ct : chiTietList) {
-                ChiTietDonHangDTO ctDTO = new ChiTietDonHangDTO();
-                ctDTO.setMaChiTietDonHang(ct.getMaChiTietDonHang());
-                ctDTO.setMaSanPham(ct.getProduct().getMaSanPham());
-                ctDTO.setTenSanPham(ct.getProduct().getTenSanPham());
-                ctDTO.setSoLuong(ct.getSoLuong());
-                ctDTO.setGiaBan(ct.getGiaBan());
-                ctDTO.setThanhTien(ct.getGiaBan() * ct.getSoLuong());
-                // Lấy hình ảnh đầu tiên — ưu tiên duongDan (Supabase URL), fallback duLieuAnh (base64)
-                if (ct.getProduct().getHinhAnhs() != null && !ct.getProduct().getHinhAnhs().isEmpty()) {
-                    var hinhAnh = ct.getProduct().getHinhAnhs().get(0);
-                    String imgUrl = hinhAnh.getDuongDan() != null && !hinhAnh.getDuongDan().isBlank()
-                            ? hinhAnh.getDuongDan()
-                            : hinhAnh.getDuLieuAnh();
-                    ctDTO.setHinhAnh(imgUrl);
-                }
-                ctDTOs.add(ctDTO);
-            }
-        }
-        dto.setChiTiet(ctDTOs);
-        return dto;
-    }
-
     @Override
     public List<DonHangDTO> getSellOrdersOfSeller(String email, String trangThai) {
         User seller = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-        // Lấy tất cả đơn hàng với eager load chi tiết, sản phẩm và người bán
         List<DonHang> allOrders = donHangRepository.findAllWithDetails();
 
         return allOrders.stream()
                 .filter(dh -> {
-                    // Kiểm tra nếu đơn hàng có chứa sản phẩm của seller này
                     boolean hasSellersProduct = dh.getChiTietDonHangs().stream()
-                            .anyMatch(ct -> ct.getProduct() != null 
+                            .anyMatch(ct -> ct.getProduct() != null
                                     && ct.getProduct().getUser() != null
                                     && ct.getProduct().getUser().getMaNguoiDung() == seller.getMaNguoiDung());
-                    
-                    if (!hasSellersProduct) {
-                        return false;
-                    }
-
-                    // Kiểm tra filter theo trạng thái
-                    if ("all".equalsIgnoreCase(trangThai)) {
-                        return true;
-                    }
-                    
-                    String currentStatus = dh.getTrangThaiDonHang() != null 
-                            ? dh.getTrangThaiDonHang().getTenTrangThai() 
-                            : "";
+                    if (!hasSellersProduct) return false;
+                    if ("all".equalsIgnoreCase(trangThai)) return true;
+                    String currentStatus = dh.getTrangThaiDonHang() != null
+                            ? dh.getTrangThaiDonHang().getTenTrangThai() : "";
                     return currentStatus.equalsIgnoreCase(trangThai);
                 })
                 .sorted((o1, o2) -> {
-                    // Sắp xếp theo ngày tạo giảm dần
-                    if (o1.getNgayTao() == null || o2.getNgayTao() == null) {
-                        return 0;
-                    }
+                    if (o1.getNgayTao() == null || o2.getNgayTao() == null) return 0;
                     return o2.getNgayTao().compareTo(o1.getNgayTao());
                 })
                 .map(dh -> convertToDTO(dh, dh.getChiTietDonHangs()))
@@ -238,21 +262,17 @@ public class DonHangServiceImpl implements DonHangService {
     @Override
     @Transactional
     public DonHangDTO xacNhanDonHang(String sellerEmail, int maDonHang) {
-        // Dùng findByIdWithDetails để FETCH JOIN đầy đủ chiTietDonHangs → product → user
-        // tránh lazy loading bug khi gọi getChiTietDonHangs() ngoài session
         DonHang donHang = donHangRepository.findByIdWithDetails(maDonHang)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        // Đơn hàng chỉ hiển thị trên UI của seller khi họ có sản phẩm trong đó.
-        // JWT đã xác thực danh tính, không cần check lại isSeller để tránh mâu thuẫn logic.
         String currentStatus = donHang.getTrangThaiDonHang() != null
                 ? donHang.getTrangThaiDonHang().getTenTrangThai() : "";
         if (!"Chờ duyệt".equals(currentStatus)) {
             throw new RuntimeException("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Chờ duyệt'");
         }
 
-        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
+        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Đã duyệt")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Đã duyệt'"));
         donHang.setTrangThaiDonHang(trangThaiDaDuyet);
         donHangRepository.save(donHang);
 
@@ -262,12 +282,9 @@ public class DonHangServiceImpl implements DonHangService {
     @Override
     @Transactional
     public DonHangDTO huyDonHangBySeller(String sellerEmail, int maDonHang, String lyDoHuy) {
-        // Dùng findByIdWithDetails để FETCH JOIN đầy đủ, tránh lazy loading
         DonHang donHang = donHangRepository.findByIdWithDetails(maDonHang)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        // Đơn hàng chỉ hiển thị trên UI của seller khi họ có sản phẩm trong đó.
-        // JWT đã xác thực danh tính, không cần check lại isSeller để tránh mâu thuẫn logic.
         String currentStatus = donHang.getTrangThaiDonHang() != null
                 ? donHang.getTrangThaiDonHang().getTenTrangThai() : "";
         if (!"Chờ duyệt".equals(currentStatus)) {
@@ -287,12 +304,9 @@ public class DonHangServiceImpl implements DonHangService {
     @Transactional(readOnly = true)
     public PageResponse<DonHangDTO> getAllOrdersForAdmin(String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("ngayTao").descending());
-        Page<DonHang> orderPage;
-        if ("all".equalsIgnoreCase(status)) {
-            orderPage = donHangRepository.findAll(pageable);
-        } else {
-            orderPage = donHangRepository.findByTrangThaiDonHangTenTrangThaiIgnoreCase(status, pageable);
-        }
+        Page<DonHang> orderPage = "all".equalsIgnoreCase(status)
+                ? donHangRepository.findAll(pageable)
+                : donHangRepository.findByTrangThaiDonHangTenTrangThaiIgnoreCase(status, pageable);
 
         List<DonHangDTO> content = orderPage.getContent().stream()
                 .map(dh -> convertToDTO(dh, dh.getChiTietDonHangs()))
@@ -321,8 +335,8 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Chờ duyệt'");
         }
 
-        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
+        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Đã duyệt")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Đã duyệt'"));
         donHang.setTrangThaiDonHang(trangThaiDaDuyet);
         donHangRepository.save(donHang);
 
@@ -349,5 +363,65 @@ public class DonHangServiceImpl implements DonHangService {
 
         return convertToDTO(donHang, donHang.getChiTietDonHangs());
     }
-}
 
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private DonHangDTO convertToDTO(DonHang dh, List<ChiTietDonHang> chiTietList) {
+        DonHangDTO dto = new DonHangDTO();
+        dto.setMaDonHang(dh.getMaDonHang());
+        dto.setNgayTao(dh.getNgayTao() != null ? dh.getNgayTao().toString() : "");
+        dto.setDiaChiNhanHang(dh.getDiaChiNhanHang());
+        dto.setChiPhiGiaoHang(dh.getChiPhiGiaoHang());
+        dto.setTongTienSanPham(dh.getTongTienSanPham());
+        dto.setTongTien(dh.getTongTien());
+        dto.setTrangThai(dh.getTrangThaiDonHang() != null
+                ? dh.getTrangThaiDonHang().getTenTrangThai() : "");
+        dto.setLyDoHuy(dh.getLyDoHuy());
+        dto.setPhuongThucThanhToan(dh.getPhuongThucThanhToan());
+        dto.setMaDonHangCha(dh.getMaDonHangCha());
+
+        // Tên người mua
+        if (dh.getUser() != null) {
+            dto.setTenKhachHang(buildTenNguoiDung(dh.getUser()));
+        }
+
+        // Tên người bán — lấy từ sản phẩm đầu tiên trong đơn
+        if (chiTietList != null && !chiTietList.isEmpty()) {
+            var firstProduct = chiTietList.get(0).getProduct();
+            if (firstProduct != null && firstProduct.getUser() != null) {
+                dto.setTenNguoiBan(buildTenNguoiDung(firstProduct.getUser()));
+            }
+        }
+
+        // Chi tiết sản phẩm
+        List<ChiTietDonHangDTO> ctDTOs = new ArrayList<>();
+        if (chiTietList != null) {
+            for (ChiTietDonHang ct : chiTietList) {
+                ChiTietDonHangDTO ctDTO = new ChiTietDonHangDTO();
+                ctDTO.setMaChiTietDonHang(ct.getMaChiTietDonHang());
+                ctDTO.setMaSanPham(ct.getProduct().getMaSanPham());
+                ctDTO.setTenSanPham(ct.getProduct().getTenSanPham());
+                ctDTO.setSoLuong(ct.getSoLuong());
+                ctDTO.setGiaBan(ct.getGiaBan());
+                ctDTO.setThanhTien(ct.getGiaBan() * ct.getSoLuong());
+                // Ảnh: ưu tiên duongDan (Supabase URL), fallback duLieuAnh (base64)
+                if (ct.getProduct().getHinhAnhs() != null && !ct.getProduct().getHinhAnhs().isEmpty()) {
+                    var hinhAnh = ct.getProduct().getHinhAnhs().get(0);
+                    String imgUrl = hinhAnh.getDuongDan() != null && !hinhAnh.getDuongDan().isBlank()
+                            ? hinhAnh.getDuongDan()
+                            : hinhAnh.getDuLieuAnh();
+                    ctDTO.setHinhAnh(imgUrl);
+                }
+                ctDTOs.add(ctDTO);
+            }
+        }
+        dto.setChiTiet(ctDTOs);
+        return dto;
+    }
+
+    private String buildTenNguoiDung(User user) {
+        String ten = ((user.getHoDem() != null ? user.getHoDem() : "")
+                + " " + (user.getTen() != null ? user.getTen() : "")).trim();
+        return ten.isBlank() ? user.getEmail() : ten;
+    }
+}

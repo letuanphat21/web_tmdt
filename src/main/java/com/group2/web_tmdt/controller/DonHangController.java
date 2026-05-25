@@ -21,7 +21,7 @@ public class DonHangController {
     private final DonHangService donHangService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<DonHangDTO>> taoDoHang(
+    public ResponseEntity<ApiResponse<List<DonHangDTO>>> taoDoHang(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, Object> body) {
         String diaChi = (String) body.get("diaChiNhanHang");
@@ -34,9 +34,9 @@ public class DonHangController {
             return ApiResponse.error(HttpStatus.BAD_REQUEST, "Vui lòng nhập địa chỉ nhận hàng");
         }
 
-        DonHangDTO donHang = donHangService.taoDoHang(
+        List<DonHangDTO> donHangs = donHangService.taoDoHang(
                 userDetails.getUsername(), diaChi, chiPhiGiaoHang, phuongThucThanhToan);
-        return ApiResponse.ok("Đặt hàng thành công!", donHang);
+        return ApiResponse.ok("Đặt hàng thành công!", donHangs);
     }
 
     @GetMapping

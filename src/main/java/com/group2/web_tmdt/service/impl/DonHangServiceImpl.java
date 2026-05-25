@@ -251,8 +251,8 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Chờ duyệt'");
         }
 
-        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Đã duyệt")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Đã duyệt'"));
+        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
         donHang.setTrangThaiDonHang(trangThaiDaDuyet);
         donHangRepository.save(donHang);
 
@@ -321,8 +321,8 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Chờ duyệt'");
         }
 
-        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Đã duyệt")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Đã duyệt'"));
+        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
         donHang.setTrangThaiDonHang(trangThaiDaDuyet);
         donHangRepository.save(donHang);
 

@@ -31,10 +31,6 @@ public class HomeController {
     private final CategoryService categoryService;
     private final SellerService sellerService;
 
-    /**
-     * GET /api/home/hero
-     * Lấy dữ liệu cho Hero section
-     */
     @GetMapping("/hero")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getHeroData() {
         Map<String, Object> heroData = new HashMap<>();
@@ -46,23 +42,12 @@ public class HomeController {
         return ApiResponse.ok("Lấy dữ liệu Hero thành công!", heroData);
     }
 
-    /**
-     * GET /api/home/categories
-     * Lấy danh sách tất cả danh mục
-     */
     @GetMapping("/categories")
     public ResponseEntity<ApiResponse<List<CategoryDTO>>> getCategories() {
         List<CategoryDTO> categories = categoryService.getAllCategories();
         return ApiResponse.ok("Lấy danh sách danh mục thành công!", categories);
     }
 
-    /**
-     * GET /api/home/products/newest
-     * Lấy sản phẩm mới đăng
-     * 
-     * Query params:
-     * - limit: số lượng sản phẩm (mặc định: 10)
-     */
     @GetMapping("/products/newest")
     public ResponseEntity<ApiResponse<List<ProductDTO>>> getNewestProducts(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -75,14 +60,6 @@ public class HomeController {
         return ApiResponse.ok("Lấy sản phẩm mới đăng thành công!", products);
     }
 
-    /**
-     * GET /api/home/products/best-selling
-     * Lấy sản phẩm bán chạy nhất
-     * 
-     * Query params:
-     * - page: trang (mặc định: 0)
-     * - size: số lượng sản phẩm trên mỗi trang (mặc định: 10)
-     */
     @GetMapping("/products/best-selling")
     public ResponseEntity<ApiResponse<Page<ProductDTO>>> getBestSellingProducts(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -97,13 +74,6 @@ public class HomeController {
         return ApiResponse.ok("Lấy sản phẩm bán chạy nhất thành công!", products);
     }
 
-    /**
-     * GET /api/home/sellers/top-rated
-     * Lấy danh sách top người bán có xếp hạng cao nhất
-     * 
-     * Query params:
-     * - limit: số lượng người bán (mặc định: 8)
-     */
     @GetMapping("/sellers/top-rated")
     public ResponseEntity<ApiResponse<List<SellerDTO>>> getTopRatedSellers(
             @RequestParam(defaultValue = "8") int limit) {
@@ -111,13 +81,6 @@ public class HomeController {
         return ApiResponse.ok("Lấy danh sách top người bán thành công!", sellers);
     }
 
-    /**
-     * GET /api/home/sellers/top-products
-     * Lấy danh sách top người bán có sản phẩm nhiều nhất
-     * 
-     * Query params:
-     * - limit: số lượng người bán (mặc định: 8)
-     */
     @GetMapping("/sellers/top-products")
     public ResponseEntity<ApiResponse<List<SellerDTO>>> getTopSellersByProductCount(
             @RequestParam(defaultValue = "8") int limit) {
@@ -125,10 +88,6 @@ public class HomeController {
         return ApiResponse.ok("Lấy danh sách người bán top sản phẩm thành công!", sellers);
     }
 
-    /**
-     * GET /api/home/products/category/{categoryId}
-     * Lấy sản phẩm theo danh mục
-     */
     @GetMapping("/products/category/{categoryId}")
     public ResponseEntity<ApiResponse<List<ProductDTO>>> getProductsByCategory(
             @PathVariable int categoryId) {
@@ -136,10 +95,6 @@ public class HomeController {
         return ApiResponse.ok("Lấy sản phẩm theo danh mục thành công!", products);
     }
 
-    /**
-     * GET /api/home/products/{id}
-     * Lấy chi tiết một sản phẩm
-     */
     @GetMapping("/products/{id}")
     public ResponseEntity<ApiResponse<ProductDTO>> getProductDetail(@PathVariable long id) {
         ProductDTO product = productService.getProductById(id);
@@ -150,10 +105,6 @@ public class HomeController {
         }
     }
 
-    /**
-     * GET /api/home/sellers/{id}
-     * Lấy thông tin chi tiết người bán
-     */
     @GetMapping("/sellers/{id}")
     public ResponseEntity<ApiResponse<SellerDTO>> getSellerDetail(@PathVariable long id) {
         SellerDTO seller = sellerService.getSellerById(id);
@@ -162,5 +113,24 @@ public class HomeController {
         } else {
             return ApiResponse.error(HttpStatus.NOT_FOUND, "Người bán không tồn tại.");
         }
+    }
+
+    @GetMapping("/sellers/{id}/products")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getProductsBySeller(
+            @PathVariable long id,
+            @RequestParam(defaultValue = "8") int limit,
+            @RequestParam(required = false) Long excludeProductId) {
+        List<ProductDTO> products = productService.getProductsBySeller(id);
+        // Loại trừ sản phẩm đang xem
+        if (excludeProductId != null) {
+            products = products.stream()
+                    .filter(p -> p.getMaSanPham() != excludeProductId)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        // Giới hạn số lượng
+        if (products.size() > limit) {
+            products = products.subList(0, limit);
+        }
+        return ApiResponse.ok("Lấy sản phẩm của người bán thành công!", products);
     }
 }

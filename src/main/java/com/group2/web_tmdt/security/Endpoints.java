@@ -12,7 +12,8 @@ public class Endpoints {
                         "/api/products/search",
                         "/api/categories/**",
                         "/api/statuses/**",
-                        "/api/payment/vnpay/ipn",   // VNPAY IPN: server-to-server, không cần auth
+                        "/api/payment/vnpay/ipn",
+                        "/api/comments",        // Xem bình luận không cần đăng nhập
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {

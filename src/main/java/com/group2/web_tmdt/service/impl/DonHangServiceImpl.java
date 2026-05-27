@@ -389,7 +389,9 @@ public class DonHangServiceImpl implements DonHangService {
         if (chiTietList != null && !chiTietList.isEmpty()) {
             var firstProduct = chiTietList.get(0).getProduct();
             if (firstProduct != null && firstProduct.getUser() != null) {
-                dto.setTenNguoiBan(buildTenNguoiDung(firstProduct.getUser()));
+                User seller = firstProduct.getUser();
+                dto.setTenNguoiBan(buildTenNguoiDung(seller));
+                dto.setEmailNguoiBan(seller.getEmail());
             }
         }
 

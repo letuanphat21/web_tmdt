@@ -23,5 +23,6 @@ public class DonHangDTO {
     private Integer maDonHangCha;         // group các đơn con cùng 1 lần checkout
     private String tenKhachHang;          // tên người mua
     private String tenNguoiBan;           // tên seller của đơn này
+    private String emailNguoiBan;         // email seller
     private List<ChiTietDonHangDTO> chiTiet;
 }

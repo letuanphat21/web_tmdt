@@ -4,11 +4,15 @@ import com.group2.web_tmdt.dto.ApiResponse;
 import com.group2.web_tmdt.dto.UpdateProfileRequest;
 import com.group2.web_tmdt.dto.UserProfileResponse;
 import com.group2.web_tmdt.service.UserService;
+import com.group2.web_tmdt.websocket.dto.ConversationResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -55,4 +59,6 @@ public class UserController {
         UserProfileResponse updated = userService.updateProfile(userDetails.getUsername(), request);
         return ApiResponse.ok("Cập nhật hồ sơ thành công!", updated);
     }
+
+
 }

@@ -34,6 +34,8 @@ public class Endpoints {
                         "/api/products/seller",
                         "/api/orders",
                         "/api/orders/**",
+                        "/api/conversations",
+                        "/api/conversations/*",
         };
 
         public static final String[] PRIVATE_POST_ENDPOINT = new String[] {
@@ -41,7 +43,8 @@ public class Endpoints {
                         "/api/cart/add",
                         "/api/products/post",
                         "/api/orders",
-                        "/api/payment/vnpay/create-payment",  // Tạo URL thanh toán VNPAY
+                        "/api/payment/vnpay/create-payment",// Tạo URL thanh toán VNPAY
+                        "/api/conversations",
         };
 
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {

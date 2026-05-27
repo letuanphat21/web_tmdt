@@ -63,11 +63,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(auth -> auth
+                // websocket
+                .requestMatchers("/app_socket/**").permitAll()
+                .requestMatchers("/app_socket").permitAll()
+
                 .requestMatchers(HttpMethod.GET, Endpoints.PUBLIC_GET_ENDPOINTS).permitAll()
                 .requestMatchers(HttpMethod.POST, Endpoints.PUBLIC_POST_ENDPOINTS).permitAll()
+
                 .requestMatchers(HttpMethod.GET, Endpoints.PRIVATE_GET_ENDPOINT).authenticated()
                 .requestMatchers(HttpMethod.POST, Endpoints.PRIVATE_POST_ENDPOINT).authenticated()
                 .requestMatchers(HttpMethod.PUT, Endpoints.PRIVATE_PUT_ENDPOINT).authenticated()
+
                 .requestMatchers(HttpMethod.PUT, Endpoints.ADMIN_PUT_ENDPOINTS).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, Endpoints.ADMIN_GET_ENDPOINTS).hasRole("ADMIN")
                 .anyRequest().authenticated());

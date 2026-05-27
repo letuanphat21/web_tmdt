@@ -4,20 +4,26 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Entity
 @Table(name = "user")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     @Column(name = "ma_nguoi_dung")
     private long maNguoiDung;
 
@@ -106,5 +112,34 @@ public class User {
             CascadeType.DETACH,
     })
     private List<DonHang> donHangs;
+
+
+
+
+//    ------------------------ Phần app chat
+    @ManyToMany
+    @JoinTable(
+            name= "user_friends",
+            joinColumns =@JoinColumn(name="user_id"),
+            inverseJoinColumns = @JoinColumn(name ="friend_id")
+    )
+    @ToString.Exclude
+    private Set<User> friends = new HashSet<>();
+
+
+    // Các conversation tham gia
+    @ManyToMany(mappedBy = "members")
+    @ToString.Exclude
+    private Set<Conversation> conversations = new HashSet<>();
+
+    @OneToMany(mappedBy = "sender")
+    private List<Message> sentMessages;
+
+
+
+
+
+
+
 
 }

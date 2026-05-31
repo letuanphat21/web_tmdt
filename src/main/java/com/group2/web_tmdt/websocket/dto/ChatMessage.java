@@ -17,6 +17,4 @@ public class ChatMessage {
     private String senderEmail;
     private Long conversationId;
 
-
-
 }

@@ -162,11 +162,23 @@ public class DonHangServiceImpl implements DonHangService {
         dto.setLyDoHuy(dh.getLyDoHuy());
         dto.setPhuongThucThanhToan(dh.getPhuongThucThanhToan());
         
-        // Set tên khách hàng (người mua)
+        // Set tên và số điện thoại khách hàng (người mua)
         if (dh.getUser() != null) {
             dto.setTenKhachHang(dh.getUser().getTen() != null ? dh.getUser().getTen() : dh.getUser().getEmail());
+            dto.setSdtKhachHang(dh.getUser().getSoDienThoai() != null ? dh.getUser().getSoDienThoai() : "");
         } else {
             dto.setTenKhachHang("Khách hàng");
+            dto.setSdtKhachHang("");
+        }
+
+        // Set tên shop bán hàng (lấy từ sản phẩm đầu tiên trong chi tiết)
+        if (chiTietList != null && !chiTietList.isEmpty()) {
+            ChiTietDonHang firstItem = chiTietList.get(0);
+            if (firstItem.getProduct() != null && firstItem.getProduct().getUser() != null) {
+                User seller = firstItem.getProduct().getUser();
+                dto.setTenShop(seller.getTen() != null ? seller.getTen() : seller.getEmail());
+                dto.setSdtShop(seller.getSoDienThoai() != null ? seller.getSoDienThoai() : "");
+            }
         }
 
         List<ChiTietDonHangDTO> ctDTOs = new ArrayList<>();
@@ -345,6 +357,21 @@ public class DonHangServiceImpl implements DonHangService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Đã hủy'"));
         donHang.setTrangThaiDonHang(trangThaiHuy);
         donHang.setLyDoHuy(lyDoHuy != null ? lyDoHuy : "Admin hủy đơn");
+        donHangRepository.save(donHang);
+
+        return convertToDTO(donHang, donHang.getChiTietDonHangs());
+    }
+
+    @Override
+    @Transactional
+    public DonHangDTO updateOrderStatus(int maDonHang, String trangThaiMoi) {
+        DonHang donHang = donHangRepository.findByIdWithDetails(maDonHang)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        TrangThaiDonHang trangThai = trangThaiDonHangRepository.findByTenTrangThai(trangThaiMoi)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái: " + trangThaiMoi));
+        
+        donHang.setTrangThaiDonHang(trangThai);
         donHangRepository.save(donHang);
 
         return convertToDTO(donHang, donHang.getChiTietDonHangs());

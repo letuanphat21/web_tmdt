@@ -32,4 +32,10 @@ public class DonHangDTO {
     private List<ChiTietDonHangDTO> chiTiet;
 
     private String tenKhachHang; // Tên khách hàng (người mua)
+
+    private String sdtKhachHang; // Số điện thoại khách hàng
+
+    private String tenShop; // Tên shop bán hàng
+
+    private String sdtShop; // Số điện thoại shop bán hàng
 }

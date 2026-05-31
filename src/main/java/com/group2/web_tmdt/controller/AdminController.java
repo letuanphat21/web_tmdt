@@ -7,6 +7,7 @@ import com.group2.web_tmdt.dto.PageResponse;
 import com.group2.web_tmdt.service.AdminService;
 import com.group2.web_tmdt.service.DonHangService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,6 +56,13 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         adminService.deleteUser(id);
         return ApiResponse.ok("Xóa người dùng thành công!", null);
+    }
+
+    /** POST /api/admin/users */
+    @PostMapping("/users")
+    public ResponseEntity<ApiResponse<AdminUserDTO>> createUser(@RequestBody AdminUserDTO userDTO) {
+        AdminUserDTO response = adminService.createUser(userDTO);
+        return ApiResponse.ok("Tạo người dùng thành công!", response);
     }
 
     /** GET /api/admin/users/hidden?page=0&size=10 */
@@ -112,6 +120,22 @@ public class AdminController {
         String lyDoHuy = (String) body.getOrDefault("lyDoHuy", "Admin hủy đơn");
         DonHangDTO donHang = donHangService.adminCancelOrder(id, lyDoHuy);
         return ApiResponse.ok("Hủy đơn hàng thành công!", donHang);
+    }
+
+    /**
+     * PUT /api/admin/orders/{id}/status
+     * Admin chuyển đổi trạng thái đơn hàng sang trạng thái khác
+     */
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<ApiResponse<DonHangDTO>> updateOrderStatus(
+            @PathVariable int id,
+            @RequestBody Map<String, Object> body) {
+        String trangThaiMoi = (String) body.get("trangThai");
+        if (trangThaiMoi == null || trangThaiMoi.isBlank()) {
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, "Vui lòng nhập trạng thái mới");
+        }
+        DonHangDTO donHang = donHangService.updateOrderStatus(id, trangThaiMoi);
+        return ApiResponse.ok("Cập nhật trạng thái đơn hàng thành công!", donHang);
     }
 
     @lombok.Data

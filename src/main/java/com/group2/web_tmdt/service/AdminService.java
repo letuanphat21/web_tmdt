@@ -33,4 +33,9 @@ public interface AdminService {
      * Tìm kiếm người dùng bị ẩn (active = false) theo keyword
      */
     PageResponse<AdminUserDTO> searchHiddenUsers(String keyword, int page, int size);
+
+    /**
+     * Tạo người dùng mới
+     */
+    AdminUserDTO createUser(AdminUserDTO userDTO);
 }

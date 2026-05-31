@@ -28,6 +28,8 @@ public class DonHangDTO {
 
     private String sdtKhachHang; // Số điện thoại khách hàng
 
+    private String emailKhachHang; // Email khách hàng (người mua)
+
     private String tenShop; // Tên shop bán hàng
 
     private String sdtShop; // Số điện thoại shop bán hàng

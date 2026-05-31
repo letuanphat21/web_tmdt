@@ -1,6 +1,8 @@
 package com.group2.web_tmdt.controller;
 
+import com.group2.web_tmdt.dao.UserRepository;
 import com.group2.web_tmdt.dto.*;
+import com.group2.web_tmdt.entity.User;
 import com.group2.web_tmdt.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
         private final ProductService productService;
+        private final UserRepository userRepository;
 
         @GetMapping("/search")
         public ResponseEntity<ApiResponse<Page<ProductDTO>>> searchProducts(
@@ -26,7 +29,22 @@ public class ProductController {
                         @RequestParam(required = false) Integer statusId,
                         @RequestParam(required = false) Double minPrice,
                         @RequestParam(required = false) Double maxPrice,
+                        Authentication authentication,
                         Pageable pageable) {
+
+                // Lấy ID người dùng hiện tại (nếu đã đăng nhập) để không hiển thị sản phẩm của chính họ
+                Long currentUserId = null;
+                if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
+                    String email = authentication.getName();
+                    try {
+                        User user = userRepository.findByEmail(email).orElse(null);
+                        if (user != null) {
+                            currentUserId = user.getMaNguoiDung();
+                        }
+                    } catch (Exception e) {
+                        // Nếu lỗi khi lấy user, để currentUserId = null
+                    }
+                }
 
                 Page<ProductDTO> products = productService.searchProducts(
                                 keyword,
@@ -34,6 +52,7 @@ public class ProductController {
                                 statusId,
                                 minPrice,
                                 maxPrice,
+                                currentUserId,
                                 pageable);
 
                 return ApiResponse.ok(

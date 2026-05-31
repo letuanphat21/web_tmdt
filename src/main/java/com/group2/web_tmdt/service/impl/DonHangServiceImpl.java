@@ -398,6 +398,7 @@ public class DonHangServiceImpl implements DonHangService {
         // Tên người mua
         if (dh.getUser() != null) {
             dto.setTenKhachHang(buildTenNguoiDung(dh.getUser()));
+            dto.setEmailKhachHang(dh.getUser().getEmail());
         }
 
         // Tên người bán — lấy từ sản phẩm đầu tiên trong đơn

@@ -73,8 +73,12 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                                     new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                             System.out.println(auth);
                             accessor.setUser(auth);
+                            System.out.println(accessor.getUser());
                         }
                     }
+                }else if(StompCommand.DISCONNECT.equals(accessor.getCommand())){
+                    System.out.println(">>> DISCONNECT");
+                    System.out.println(">>> USER = " + accessor.getUser());
                 }
 
                 return message;

@@ -12,7 +12,8 @@ public class Endpoints {
                         "/api/products/search",
                         "/api/categories/**",
                         "/api/statuses/**",
-                        "/api/payment/vnpay/ipn",   // VNPAY IPN: server-to-server, không cần auth
+                        "/api/payment/vnpay/ipn",
+                        "/api/comments",        // Xem bình luận không cần đăng nhập
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {
@@ -33,6 +34,8 @@ public class Endpoints {
                         "/api/products/seller",
                         "/api/orders",
                         "/api/orders/**",
+                        "/api/conversations",
+                        "/api/conversations/*",
         };
 
         public static final String[] PRIVATE_POST_ENDPOINT = new String[] {
@@ -40,7 +43,8 @@ public class Endpoints {
                         "/api/cart/add",
                         "/api/products/post",
                         "/api/orders",
-                        "/api/payment/vnpay/create-payment",  // Tạo URL thanh toán VNPAY
+                        "/api/payment/vnpay/create-payment",// Tạo URL thanh toán VNPAY
+                        "/api/conversations",
         };
 
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {

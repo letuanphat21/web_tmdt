@@ -35,6 +35,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductSellerMapper productSellerMapper;
     private final ProductAdminMapper productAdminMapper;
+    private final ReviewRepository reviewRepository;
 
     @Override
     public List<ProductDTO> getNewestProducts(int limit, String excludeEmail) {
@@ -496,36 +497,70 @@ public class ProductServiceImpl implements ProductService {
         dto.setTenSanPham(product.getTenSanPham());
         dto.setGiaSanPham(product.getGiaSanPham());
         dto.setSoLuong(product.getSoLuong());
-        dto.setTenNguoiBan(product.getUser().getEmail());
-        dto.setMaNguoiBan(product.getUser().getMaNguoiDung());
-        dto.setEmail(product.getUser().getEmail());
-        
-        // Set category info
+
+        // Thông tin người bán
+        User seller = product.getUser();
+        dto.setTenNguoiBan(
+            (seller.getHoDem() != null ? seller.getHoDem() : "")
+            + " " + (seller.getTen() != null ? seller.getTen() : "")
+        );
+        if (dto.getTenNguoiBan().isBlank()) dto.setTenNguoiBan(seller.getEmail());
+        dto.setMaNguoiBan(seller.getMaNguoiDung());
+        dto.setEmail(seller.getEmail());
+        dto.setHinhAnhDaiDien(seller.getAvatar());
+
+        // Danh mục
         if (product.getCategory() != null) {
             dto.setTenTheLoai(product.getCategory().getTenTheLoai());
             dto.setMaTheLoai(product.getCategory().getMaTheLoai());
         }
-        
-        // Set status info
+
+        // Tình trạng
         if (product.getTinhTrang() != null) {
             dto.setMaTinhTrang(product.getTinhTrang().getMaTinhTrang());
             dto.setTenTinhTrang(product.getTinhTrang().getTenTinhTrang());
         }
 
-        // Map danh sách hình ảnh sản phẩm
+        // Hình ảnh sản phẩm
         if (product.getHinhAnhs() != null && !product.getHinhAnhs().isEmpty()) {
             List<String> hinhAnhs = product.getHinhAnhs().stream()
-                    .map(hinhAnh -> hinhAnh.getDuongDan())
+                    .map(h -> h.getDuongDan() != null && !h.getDuongDan().isBlank()
+                            ? h.getDuongDan() : h.getDuLieuAnh())
                     .collect(Collectors.toList());
             dto.setHinhAnhs(hinhAnhs);
-            
-            // Lấy ảnh đầu tiên của SẢN PHẨM làm ảnh đại diện
-            if (!hinhAnhs.isEmpty()) {
-                dto.setHinhAnhDaiDien(hinhAnhs.get(0));
-            }
+            dto.setHinhAnhDaiDien(hinhAnhs.get(0));
         } else {
             dto.setHinhAnhs(Collections.emptyList());
-            dto.setHinhAnhDaiDien(null);
+        }
+
+        // ── Đánh giá ──────────────────────────────────────────────────────────
+        List<Review> reviews = reviewRepository.findByProductMaSanPham(product.getMaSanPham());
+        dto.setSoLuongDanhGia(reviews.size());
+
+        if (!reviews.isEmpty()) {
+            double avg = reviews.stream()
+                    .mapToDouble(Review::getDiemXepHang)
+                    .average()
+                    .orElse(0.0);
+            dto.setDanhGia(avg);
+
+            // Map sang ReviewDTO
+            List<ReviewDTO> reviewDTOs = reviews.stream().map(r -> {
+                ReviewDTO rdto = new ReviewDTO();
+                rdto.setMaDanhGia(r.getMaDanhGia());
+                rdto.setDiemXepHang(r.getDiemXepHang());
+                rdto.setNhanXet(r.getNhanXet());
+                rdto.setEmailNguoiDung(r.getUser().getEmail());
+                String ten = ((r.getUser().getHoDem() != null ? r.getUser().getHoDem() : "")
+                        + " " + (r.getUser().getTen() != null ? r.getUser().getTen() : "")).trim();
+                rdto.setTenNguoiDung(ten.isBlank() ? r.getUser().getEmail() : ten);
+                rdto.setAvatarNguoiDung(r.getUser().getAvatar());
+                return rdto;
+            }).collect(Collectors.toList());
+            dto.setDanhGias(reviewDTOs);
+        } else {
+            dto.setDanhGia(0.0);
+            dto.setDanhGias(Collections.emptyList());
         }
 
         return dto;

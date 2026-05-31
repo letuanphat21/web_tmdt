@@ -3,6 +3,7 @@ package com.group2.web_tmdt.service;
 import com.group2.web_tmdt.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -60,4 +61,9 @@ public interface ProductService {
     ProductSellerDTO getProductForManagement(long productId, boolean isAdmin);
 
     Page<ProductAdminDTO> getProductsForAdmin(Pageable pageable,SellerListingFilter filter);
+
+    /**
+     * Tìm kiếm sản phẩm theo hình ảnh với mức tương đồng tối thiểu
+     */
+    List<ProductDTO> searchByImage(MultipartFile imageFile, Double threshold, Long currentUserId);
 }

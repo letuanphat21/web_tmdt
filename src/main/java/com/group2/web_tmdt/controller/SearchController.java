@@ -1,8 +1,10 @@
 package com.group2.web_tmdt.controller;
 
+import com.group2.web_tmdt.dao.UserRepository;
 import com.group2.web_tmdt.dto.ApiResponse;
 import com.group2.web_tmdt.dto.ProductDTO;
 import com.group2.web_tmdt.dto.TinhTrangDTO;
+import com.group2.web_tmdt.entity.User;
 import com.group2.web_tmdt.service.ProductService;
 import com.group2.web_tmdt.service.TinhTrangService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -25,6 +28,7 @@ public class SearchController {
 
     private final ProductService productService;
     private final TinhTrangService tinhTrangService;
+    private final UserRepository userRepository;
 
     /**
      * GET /api/search
@@ -51,12 +55,27 @@ public class SearchController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "maSanPham") String sort,
-            @RequestParam(defaultValue = "DESC") String direction) {
+            @RequestParam(defaultValue = "DESC") String direction,
+            Authentication authentication) {
 
         Sort.Direction sortDirection = Sort.Direction.valueOf(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
-        Page<ProductDTO> result = productService.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, pageable);
+        // Lấy ID người dùng hiện tại
+        Long currentUserId = null;
+        if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
+            try {
+                String email = authentication.getName();
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user != null) {
+                    currentUserId = user.getMaNguoiDung();
+                }
+            } catch (Exception e) {
+                // Nếu lỗi khi lấy user, để currentUserId = null
+            }
+        }
+
+        Page<ProductDTO> result = productService.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, currentUserId, pageable);
 
         return ApiResponse.ok("Tìm kiếm sản phẩm thành công!", result);
     }

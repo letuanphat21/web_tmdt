@@ -78,13 +78,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
            "AND (:giaMin IS NULL OR p.giaSanPham >= :giaMin) " +
            "AND (:giaMax IS NULL OR p.giaSanPham <= :giaMax) " +
            "AND p.active = true " +
-           "AND p.trangThaiSanPham.id = 2")
+           "AND p.trangThaiSanPham.id = 2 " +
+           "AND (:currentUserId IS NULL OR p.user.maNguoiDung != :currentUserId)")
     Page<Product> searchProducts(
             @Param("tenSanPham") String tenSanPham,
             @Param("maTheLoai") Integer maTheLoai,
             @Param("maTinhTrang") Integer maTinhTrang,
             @Param("giaMin") Double giaMin,
             @Param("giaMax") Double giaMax,
+            @Param("currentUserId") Long currentUserId,
             Pageable pageable
     );
 

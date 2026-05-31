@@ -8,13 +8,16 @@ import com.group2.web_tmdt.mapper.ProductAdminMapper;
 import com.group2.web_tmdt.mapper.ProductMapper;
 import com.group2.web_tmdt.mapper.ProductSellerMapper;
 import com.group2.web_tmdt.service.EmailService;
+import com.group2.web_tmdt.service.ImageSimilarityService;
 import com.group2.web_tmdt.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -32,6 +36,7 @@ public class ProductServiceImpl implements ProductService {
     private final TinhTrangRepository tinhTrangRepository;
     private final TrangThaiSanPhamRepository trangThaiSanPhamRepository;
     private final EmailService emailService;
+    private final ImageSimilarityService imageSimilarityService;
     private final ProductMapper productMapper;
     private final ProductSellerMapper productSellerMapper;
     private final ProductAdminMapper productAdminMapper;
@@ -74,8 +79,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
-                                           Double minPrice, Double maxPrice, Pageable pageable) {
-        return productRepository.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, pageable)
+                                           Double minPrice, Double maxPrice, Long currentUserId, Pageable pageable) {
+        return productRepository.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, currentUserId, pageable)
                 .map(this::convertToDTO);
     }
 
@@ -564,5 +569,59 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return dto;
+    }
+
+    @Override
+    public List<ProductDTO> searchByImage(MultipartFile imageFile, Double threshold, Long currentUserId) {
+        try {
+            log.info("Starting image search with threshold: {}, currentUserId: {}", threshold, currentUserId);
+            
+            // Lấy tất cả sản phẩm
+            List<Product> allProducts = productRepository.findAll();
+            log.info("Total products in DB: {}", allProducts.size());
+
+            // Lọc: bỏ sản phẩm của người dùng hiện tại
+            List<Product> filteredProducts = allProducts.stream()
+                    .filter(p -> currentUserId == null || p.getUser().getMaNguoiDung() != currentUserId)
+                    .collect(Collectors.toList());
+            log.info("Products after filtering seller's own: {}", filteredProducts.size());
+
+            // Tính độ tương đồng và filter theo threshold
+            List<ProductDTO> results = filteredProducts.stream()
+                    .map(product -> {
+                        // Lấy hình ảnh đầu tiên của sản phẩm
+                        if (product.getHinhAnhs() != null && !product.getHinhAnhs().isEmpty()) {
+                            String productImagePath = product.getHinhAnhs().get(0).getDuongDan();
+                            try {
+                                double similarity = imageSimilarityService.calculateSimilarityWithUploadedFile(
+                                        imageFile, productImagePath);
+                                
+                                log.debug("Product ID: {}, Image path: {}, Similarity: {}", 
+                                    product.getMaSanPham(), productImagePath, similarity);
+                                
+                                // Chỉ lấy sản phẩm có độ tương đồng >= threshold
+                                if (similarity >= threshold) {
+                                    return new Object[]{product, similarity};
+                                }
+                            } catch (Exception e) {
+                                log.error("Error processing product {} with image {}", product.getMaSanPham(), productImagePath, e);
+                            }
+                        } else {
+                            log.warn("Product {} has no images", product.getMaSanPham());
+                        }
+                        return null;
+                    })
+                    .filter(obj -> obj != null)
+                    .sorted((a, b) -> Double.compare((Double) ((Object[]) b)[1], (Double) ((Object[]) a)[1])) // Sort by similarity desc
+                    .map(obj -> convertToDTO((Product) ((Object[]) obj)[0]))
+                    .collect(Collectors.toList());
+            
+            log.info("Image search completed. Results: {}", results.size());
+            return results;
+
+        } catch (Exception e) {
+            log.error("Error in searchByImage", e);
+            return Collections.emptyList();
+        }
     }
 }

@@ -27,4 +27,7 @@ public interface DonHangService {
     DonHangDTO adminConfirmOrder(int maDonHang);
 
     DonHangDTO adminCancelOrder(int maDonHang, String lyDoHuy);
+
+    /** Admin: Cập nhật trạng thái đơn hàng sang trạng thái mới bất kỳ */
+    DonHangDTO updateOrderStatus(int maDonHang, String trangThaiMoi);
 }

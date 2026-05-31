@@ -74,6 +74,28 @@ public class AdminServiceImpl implements AdminService {
         return buildPageResponse(userPage);
     }
 
+    @Override
+    public AdminUserDTO createUser(AdminUserDTO userDTO) {
+        // Kiểm tra email đã tồn tại
+        if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
+
+        User user = new User();
+        user.setEmail(userDTO.getEmail());
+        user.setHoDem(userDTO.getHoDem());
+        user.setTen(userDTO.getTen());
+        user.setDiaChi(userDTO.getDiaChi());
+        user.setGioiTinh(userDTO.getGioiTinh());
+        user.setBirthDay(userDTO.getNgaySinh());
+        user.setActive(true); // Mặc định active = true
+        // Password sẽ được mã hóa nếu có (set ở controller)
+        user.setMatKhau("a1234567"); // Default password
+
+        User savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
+    }
+
     private PageResponse<AdminUserDTO> buildPageResponse(Page<User> userPage) {
         List<AdminUserDTO> content = userPage.getContent()
                 .stream()

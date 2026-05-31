@@ -23,7 +23,7 @@ public class Endpoints {
                         "/api/auth/quen-mat-khau",
                         "/api/auth/xac-nhan-otp",
                         "/api/auth/dat-lai-mat-khau",
-
+                        "/api/products/search-by-image",
 
         };
 

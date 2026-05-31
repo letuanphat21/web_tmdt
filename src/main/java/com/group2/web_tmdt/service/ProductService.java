@@ -3,6 +3,7 @@ package com.group2.web_tmdt.service;
 import com.group2.web_tmdt.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,10 +35,10 @@ public interface ProductService {
     List<ProductDTO> getProductsBySeller(long sellerId);
 
     /**
-     * Tìm kiếm sản phẩm với bộ lọc kết hợp
+     * Tìm kiếm sản phẩm với bộ lọc kết hợp (không bao gồm sản phẩm của người dùng hiện tại)
      */
     Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
-                                    Double minPrice, Double maxPrice, Pageable pageable);
+                                    Double minPrice, Double maxPrice, Long currentUserId, Pageable pageable);
 
 
     void postProduct(ProductForSaleRequest request,String email);
@@ -60,4 +61,9 @@ public interface ProductService {
     ProductSellerDTO getProductForManagement(long productId, boolean isAdmin);
 
     Page<ProductAdminDTO> getProductsForAdmin(Pageable pageable,SellerListingFilter filter);
+
+    /**
+     * Tìm kiếm sản phẩm theo hình ảnh với mức tương đồng tối thiểu
+     */
+    List<ProductDTO> searchByImage(MultipartFile imageFile, Double threshold, Long currentUserId);
 }

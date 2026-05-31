@@ -364,6 +364,21 @@ public class DonHangServiceImpl implements DonHangService {
         return convertToDTO(donHang, donHang.getChiTietDonHangs());
     }
 
+    @Override
+    @Transactional
+    public DonHangDTO updateOrderStatus(int maDonHang, String trangThaiMoi) {
+        DonHang donHang = donHangRepository.findByIdWithDetails(maDonHang)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        TrangThaiDonHang trangThai = trangThaiDonHangRepository.findByTenTrangThai(trangThaiMoi)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái: " + trangThaiMoi));
+        
+        donHang.setTrangThaiDonHang(trangThai);
+        donHangRepository.save(donHang);
+
+        return convertToDTO(donHang, donHang.getChiTietDonHangs());
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private DonHangDTO convertToDTO(DonHang dh, List<ChiTietDonHang> chiTietList) {
@@ -383,6 +398,7 @@ public class DonHangServiceImpl implements DonHangService {
         // Tên người mua
         if (dh.getUser() != null) {
             dto.setTenKhachHang(buildTenNguoiDung(dh.getUser()));
+            dto.setEmailKhachHang(dh.getUser().getEmail());
         }
 
         // Tên người bán — lấy từ sản phẩm đầu tiên trong đơn

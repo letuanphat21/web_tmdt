@@ -17,4 +17,6 @@ public interface DonHangService {
 
     /** Hủy đơn hàng (chỉ được hủy khi đang "Chờ xác nhận") */
     DonHangDTO huyDonHang(String email, int maDonHang, String lyDoHuy);
+
+    DonHangDTO hoanThanhDonHang(String email, int maDonHang);
 }

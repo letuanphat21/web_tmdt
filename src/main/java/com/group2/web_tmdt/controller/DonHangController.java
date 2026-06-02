@@ -63,4 +63,13 @@ public class DonHangController {
                 userDetails.getUsername(), maDonHang);
         return ApiResponse.ok("Lấy chi tiết đơn hàng thành công!", donHang);
     }
+
+    @PutMapping("/{maDonHang}/complete")
+    public ResponseEntity<ApiResponse<DonHangDTO>> hoanThanhDonHang(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable int maDonHang) {
+        DonHangDTO donHang = donHangService.hoanThanhDonHang(
+                userDetails.getUsername(), maDonHang);
+        return ApiResponse.ok("Đơn hàng đã hoàn thành, tiền đã được cộng cho người bán!", donHang);
+    }
 }

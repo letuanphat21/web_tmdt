@@ -1,17 +1,9 @@
 package com.group2.web_tmdt.service.impl;
 
-import com.group2.web_tmdt.dao.ChiTietDonHangRepository;
-import com.group2.web_tmdt.dao.DonHangRepository;
-import com.group2.web_tmdt.dao.GioHangItemRepository;
-import com.group2.web_tmdt.dao.GioHangRepository;
-import com.group2.web_tmdt.dao.UserRepository;
+import com.group2.web_tmdt.dao.*;
 import com.group2.web_tmdt.dto.ChiTietDonHangDTO;
 import com.group2.web_tmdt.dto.DonHangDTO;
-import com.group2.web_tmdt.entity.ChiTietDonHang;
-import com.group2.web_tmdt.entity.DonHang;
-import com.group2.web_tmdt.entity.GioHang;
-import com.group2.web_tmdt.entity.GioHangItem;
-import com.group2.web_tmdt.entity.User;
+import com.group2.web_tmdt.entity.*;
 import com.group2.web_tmdt.service.DonHangService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +24,8 @@ public class DonHangServiceImpl implements DonHangService {
     private final GioHangRepository gioHangRepository;
     private final GioHangItemRepository gioHangItemRepository;
     private final UserRepository userRepository;
+    private final GiaoDichRepository giaoDichRepository;
+    private final com.group2.web_tmdt.dao.ProductRepository productRepository;
 
     @Override
     @Transactional
@@ -165,5 +159,57 @@ public class DonHangServiceImpl implements DonHangService {
         }
         dto.setChiTiet(ctDTOs);
         return dto;
+    }
+
+    @Override
+    @Transactional
+    public DonHangDTO hoanThanhDonHang(String email, int maDonHang) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        DonHang donHang = donHangRepository.findById(maDonHang)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        // Xác thực quyền (Chỉ người mua đơn hàng này mới được bấm Hoàn thành)
+        if (donHang.getUser().getMaNguoiDung() != user.getMaNguoiDung()) {
+            throw new RuntimeException("Không có quyền thao tác trên đơn hàng này");
+        }
+
+        // Chặn cộng tiền 2 lần
+        if ("Thành công".equals(donHang.getTrangThai())) {
+            throw new RuntimeException("Đơn hàng này đã được hoàn tất và cộng tiền trước đó!");
+        }
+
+        // 1. Chuyển trạng thái đơn hàng
+        donHang.setTrangThai("Thành công");
+
+        // 2. Duyệt qua từng sản phẩm trong đơn để cộng tiền cho đúng Seller
+        for (ChiTietDonHang ct : donHang.getChiTietDonHangs()) {
+            Product sanPham = ct.getProduct();
+            User seller = sanPham.getUser(); // Truy xuất ra đúng người bán
+
+            double soTienCong = ct.getGiaBan() * ct.getSoLuong();
+
+            // A. Cộng tiền vào ví Seller
+            double soDuHienTai = seller.getSoDu() != null ? seller.getSoDu() : 0.0;
+            seller.setSoDu(soDuHienTai + soTienCong);
+            userRepository.save(seller);
+
+            // B. Ghi lịch sử giao dịch (Sao kê ví)
+            GiaoDich giaoDich = new GiaoDich();
+            giaoDich.setUser(seller);
+            giaoDich.setSoTien(soTienCong);
+            giaoDich.setLoaiGiaoDich("inflow"); // Mã đánh dấu tiền vào ví
+            giaoDich.setTrangThai("Thành công");
+            giaoDich.setMoTa("Tiền bán sản phẩm: " + sanPham.getTenSanPham() + " (Đơn #" + donHang.getMaDonHang() + ")");
+            giaoDichRepository.save(giaoDich);
+
+            // C. Tăng biến đếm số lượng đã bán của sản phẩm để làm thống kê
+            sanPham.setSoLuongDaBan(sanPham.getSoLuongDaBan() + ct.getSoLuong());
+            productRepository.save(sanPham);
+        }
+
+        donHangRepository.save(donHang);
+        return convertToDTO(donHang, donHang.getChiTietDonHangs());
     }
 }

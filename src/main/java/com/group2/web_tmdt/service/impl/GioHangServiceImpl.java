@@ -180,7 +180,11 @@ public class GioHangServiceImpl implements GioHangService {
         dto.setSoLuongTonKho(p.getSoLuong());
 
         if (p.getHinhAnhs() != null && !p.getHinhAnhs().isEmpty()) {
-            dto.setHinhAnh(p.getHinhAnhs().get(0).getDuLieuAnh());
+            var hinhAnh = p.getHinhAnhs().get(0);
+            String imgUrl = hinhAnh.getDuongDan() != null && !hinhAnh.getDuongDan().isBlank()
+                    ? hinhAnh.getDuongDan()
+                    : hinhAnh.getDuLieuAnh();
+            dto.setHinhAnh(imgUrl);
         }
 
         if (p.getUser() != null) {

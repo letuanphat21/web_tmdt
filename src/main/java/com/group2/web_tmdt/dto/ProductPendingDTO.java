@@ -19,25 +19,9 @@ public class ProductPendingDTO {
 
     private double giaSanPham;
 
-    private String thuongHieu;
-
-    private String moTa;
-
-    private String mauSac;
-
-    private String kichCo;
-
     private String emailSeller;
 
-    private String tenTheLoai;
-
-    private String tinhTrang;
-
     private String trangThai;
-
-    private boolean active;
-
-    private int soLuongDaBan;
 
     private List<ProductImageResponse> images;
 

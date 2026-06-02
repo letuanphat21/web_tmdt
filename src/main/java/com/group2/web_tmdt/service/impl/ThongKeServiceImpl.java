@@ -18,7 +18,7 @@ public class ThongKeServiceImpl implements ThongKeService {
     @Override
     public List<DoanhThuNgayDTO> getDoanhThuTheoThang(int maSeller, int nam, int thang) {
         // Sử dụng đúng chữ "Hoàn thành" dựa theo UserBuyOrder.tsx của team
-        return thongKeRepository.thongKeDoanhThuTheoThang(maSeller, nam, thang, "Hoàn thành");
+        return thongKeRepository.thongKeDoanhThuTheoThang(maSeller, nam, thang);
     }
 
     // ĐÃ THÊM HÀM NÀY CHO BẠN

@@ -1,6 +1,5 @@
 package com.group2.web_tmdt.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -32,11 +31,15 @@ public class DonHang {
     @Column(name = "tong_tien")
     private double tongTien;
 
-    @Column(name = "trang_thai", length = 50)
-    private String trangThai;
-
     @Column(name = "ly_do_huy", length = 512)
     private String lyDoHuy;
+
+    @Column(name = "phuong_thuc_thanh_toan", length = 50)
+    private String phuongThucThanhToan; // "COD" | "VNPAY"
+
+    /** Mã đơn hàng cha — group các đơn con của cùng 1 lần checkout */
+    @Column(name = "ma_don_hang_cha", nullable = true)
+    private Integer maDonHangCha;
 
     @ManyToOne(cascade = {
             CascadeType.DETACH,
@@ -50,6 +53,7 @@ public class DonHang {
     @OneToMany(mappedBy = "donHang", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ChiTietDonHang> chiTietDonHangs;
 
-
-
+    @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinColumn(name = "trang_thai")
+    private TrangThaiDonHang trangThaiDonHang;
 }

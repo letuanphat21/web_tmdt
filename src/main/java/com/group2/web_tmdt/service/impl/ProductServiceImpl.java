@@ -4,16 +4,20 @@ import com.group2.web_tmdt.dao.*;
 import com.group2.web_tmdt.dto.*;
 import com.group2.web_tmdt.entity.*;
 import com.group2.web_tmdt.exception.BusinessException;
+import com.group2.web_tmdt.mapper.ProductAdminMapper;
 import com.group2.web_tmdt.mapper.ProductMapper;
 import com.group2.web_tmdt.mapper.ProductSellerMapper;
 import com.group2.web_tmdt.service.EmailService;
+import com.group2.web_tmdt.service.ImageSimilarityService;
 import com.group2.web_tmdt.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -31,21 +36,24 @@ public class ProductServiceImpl implements ProductService {
     private final TinhTrangRepository tinhTrangRepository;
     private final TrangThaiSanPhamRepository trangThaiSanPhamRepository;
     private final EmailService emailService;
+    private final ImageSimilarityService imageSimilarityService;
     private final ProductMapper productMapper;
     private final ProductSellerMapper productSellerMapper;
+    private final ProductAdminMapper productAdminMapper;
+    private final ReviewRepository reviewRepository;
 
     @Override
-    public List<ProductDTO> getNewestProducts(int limit) {
-        return productRepository.findAll().stream()
-                .sorted((p1, p2) -> Long.compare(p2.getMaSanPham(), p1.getMaSanPham()))
-                .limit(limit)
+    public List<ProductDTO> getNewestProducts(int limit, String excludeEmail) {
+        // Optimize: Limit and filter at DB level instead of loading all products into memory
+        return productRepository.findNewestProducts(excludeEmail, org.springframework.data.domain.PageRequest.of(0, limit))
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Page<ProductDTO> getBestSellingProducts(Pageable pageable) {
-        return productRepository.findBestSellingProducts(pageable)
+    public Page<ProductDTO> getBestSellingProducts(Pageable pageable, String excludeEmail) {
+        return productRepository.findBestSellingProducts(excludeEmail, pageable)
                 .map(this::convertToDTO);
     }
 
@@ -71,8 +79,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
-                                           Double minPrice, Double maxPrice, Pageable pageable) {
-        return productRepository.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, pageable)
+                                           Double minPrice, Double maxPrice, Long currentUserId, Pageable pageable) {
+        return productRepository.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, currentUserId, pageable)
                 .map(this::convertToDTO);
     }
 
@@ -222,7 +230,7 @@ public class ProductServiceImpl implements ProductService {
         // Save
         productRepository.save(product);
 
-        emailService.guiEmailKichHoat(user.getEmail(),request.getLyDo() );
+        emailService.guiEmailTuChoi(user.getEmail(),request.getLyDo() );
     }
 
     @Override
@@ -239,10 +247,33 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSellerDTO> getProductsByUser(String email, Pageable pageable) {
-        User user =  userRepository.findByEmail(email).orElseThrow(() -> new BusinessException("Không tim thấy người dùng"));
-        Page<Product> products = productRepository.findByUser(user, pageable);
+    @Transactional(readOnly = true)
+    public Page<ProductSellerDTO> getProductsByUser(String email, SellerListingFilter filter, Pageable pageable) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
+
+        Page<Product> products = switch (filter == null ? SellerListingFilter.ALL : filter) {
+            case ACTIVE -> productRepository.findActiveListingsByUser(user, pageable);
+            case PENDING -> productRepository.findPendingByUser(user, pageable);
+            case SOLD_OUT -> productRepository.findSoldOutByUser(user, pageable);
+            default -> productRepository.findByUser(user, pageable);
+        };
+
         return products.map(productSellerMapper::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductAdminDTO> getProductsForAdmin(Pageable pageable, SellerListingFilter filter) {
+        Page<Product> products =switch (filter == null ? SellerListingFilter.ALL : filter){
+            case ACTIVE -> productRepository.findProductsActive(pageable);
+            case PENDING -> productRepository.findProductsPending(pageable);
+            case REJECTED -> productRepository.findProductsRejected(pageable);
+            case DEACTIVE -> productRepository.findProductsDeactive(pageable);
+            case SOLD_OUT -> productRepository.findProductSoldOut(pageable);
+            default -> productRepository.findAll(pageable);
+        };
+        return products.map(productAdminMapper:: toDTO);
     }
 
     @Override
@@ -284,6 +315,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void updateProduct(Long productId, ProductUpdateRequest request, String email, boolean isAdmin) {
+        System.out.println(request);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new BusinessException(
@@ -441,7 +473,18 @@ public class ProductServiceImpl implements ProductService {
         }
 
         productRepository.save(product);
+
     }
+
+    @Override
+    public ProductSellerDTO getProductForManagement(long productId, boolean isAdmin) {
+        Product product = null;
+        if(isAdmin){
+            product = productRepository.findById(productId).get();
+        }
+        return productSellerMapper.toDTO(product);
+    }
+
 
     private void verifyCanManageProduct(Product product, User user, boolean isAdmin) {
         boolean isOwner = product.getUser().getMaNguoiDung()== user.getMaNguoiDung();
@@ -459,38 +502,126 @@ public class ProductServiceImpl implements ProductService {
         dto.setTenSanPham(product.getTenSanPham());
         dto.setGiaSanPham(product.getGiaSanPham());
         dto.setSoLuong(product.getSoLuong());
-        dto.setTenNguoiBan(product.getUser().getEmail());
-        dto.setMaNguoiBan(product.getUser().getMaNguoiDung());
-        dto.setEmail(product.getUser().getEmail());
-        
-        // Set category info
+
+        // Thông tin người bán
+        User seller = product.getUser();
+        dto.setTenNguoiBan(
+            (seller.getHoDem() != null ? seller.getHoDem() : "")
+            + " " + (seller.getTen() != null ? seller.getTen() : "")
+        );
+        if (dto.getTenNguoiBan().isBlank()) dto.setTenNguoiBan(seller.getEmail());
+        dto.setMaNguoiBan(seller.getMaNguoiDung());
+        dto.setEmail(seller.getEmail());
+        dto.setHinhAnhDaiDien(seller.getAvatar());
+
+        // Danh mục
         if (product.getCategory() != null) {
             dto.setTenTheLoai(product.getCategory().getTenTheLoai());
             dto.setMaTheLoai(product.getCategory().getMaTheLoai());
         }
-        
-        // Set status info
+
+        // Tình trạng
         if (product.getTinhTrang() != null) {
             dto.setMaTinhTrang(product.getTinhTrang().getMaTinhTrang());
             dto.setTenTinhTrang(product.getTinhTrang().getTenTinhTrang());
         }
 
-        // Map danh sách hình ảnh sản phẩm
+        // Hình ảnh sản phẩm
         if (product.getHinhAnhs() != null && !product.getHinhAnhs().isEmpty()) {
             List<String> hinhAnhs = product.getHinhAnhs().stream()
-                    .map(hinhAnh -> hinhAnh.getDuongDan())
+                    .map(h -> h.getDuongDan() != null && !h.getDuongDan().isBlank()
+                            ? h.getDuongDan() : h.getDuLieuAnh())
                     .collect(Collectors.toList());
             dto.setHinhAnhs(hinhAnhs);
-            
-            // Lấy ảnh đầu tiên của SẢN PHẨM làm ảnh đại diện
-            if (!hinhAnhs.isEmpty()) {
-                dto.setHinhAnhDaiDien(hinhAnhs.get(0));
-            }
+            dto.setHinhAnhDaiDien(hinhAnhs.get(0));
         } else {
             dto.setHinhAnhs(Collections.emptyList());
-            dto.setHinhAnhDaiDien(null);
+        }
+
+        // ── Đánh giá ──────────────────────────────────────────────────────────
+        List<Review> reviews = reviewRepository.findByProductMaSanPham(product.getMaSanPham());
+        dto.setSoLuongDanhGia(reviews.size());
+
+        if (!reviews.isEmpty()) {
+            double avg = reviews.stream()
+                    .mapToDouble(Review::getDiemXepHang)
+                    .average()
+                    .orElse(0.0);
+            dto.setDanhGia(avg);
+
+            // Map sang ReviewDTO
+            List<ReviewDTO> reviewDTOs = reviews.stream().map(r -> {
+                ReviewDTO rdto = new ReviewDTO();
+                rdto.setMaDanhGia(r.getMaDanhGia());
+                rdto.setDiemXepHang(r.getDiemXepHang());
+                rdto.setNhanXet(r.getNhanXet());
+                rdto.setEmailNguoiDung(r.getUser().getEmail());
+                String ten = ((r.getUser().getHoDem() != null ? r.getUser().getHoDem() : "")
+                        + " " + (r.getUser().getTen() != null ? r.getUser().getTen() : "")).trim();
+                rdto.setTenNguoiDung(ten.isBlank() ? r.getUser().getEmail() : ten);
+                rdto.setAvatarNguoiDung(r.getUser().getAvatar());
+                return rdto;
+            }).collect(Collectors.toList());
+            dto.setDanhGias(reviewDTOs);
+        } else {
+            dto.setDanhGia(0.0);
+            dto.setDanhGias(Collections.emptyList());
         }
 
         return dto;
+    }
+
+    @Override
+    public List<ProductDTO> searchByImage(MultipartFile imageFile, Double threshold, Long currentUserId) {
+        try {
+            log.info("Starting image search with threshold: {}, currentUserId: {}", threshold, currentUserId);
+            
+            // Lấy tất cả sản phẩm
+            List<Product> allProducts = productRepository.findAll();
+            log.info("Total products in DB: {}", allProducts.size());
+
+            // Lọc: bỏ sản phẩm của người dùng hiện tại
+            List<Product> filteredProducts = allProducts.stream()
+                    .filter(p -> currentUserId == null || p.getUser().getMaNguoiDung() != currentUserId)
+                    .collect(Collectors.toList());
+            log.info("Products after filtering seller's own: {}", filteredProducts.size());
+
+            // Tính độ tương đồng và filter theo threshold
+            List<ProductDTO> results = filteredProducts.stream()
+                    .map(product -> {
+                        // Lấy hình ảnh đầu tiên của sản phẩm
+                        if (product.getHinhAnhs() != null && !product.getHinhAnhs().isEmpty()) {
+                            String productImagePath = product.getHinhAnhs().get(0).getDuongDan();
+                            try {
+                                double similarity = imageSimilarityService.calculateSimilarityWithUploadedFile(
+                                        imageFile, productImagePath);
+                                
+                                log.debug("Product ID: {}, Image path: {}, Similarity: {}", 
+                                    product.getMaSanPham(), productImagePath, similarity);
+                                
+                                // Chỉ lấy sản phẩm có độ tương đồng >= threshold
+                                if (similarity >= threshold) {
+                                    return new Object[]{product, similarity};
+                                }
+                            } catch (Exception e) {
+                                log.error("Error processing product {} with image {}", product.getMaSanPham(), productImagePath, e);
+                            }
+                        } else {
+                            log.warn("Product {} has no images", product.getMaSanPham());
+                        }
+                        return null;
+                    })
+                    .filter(obj -> obj != null)
+                    .sorted((a, b) -> Double.compare((Double) ((Object[]) b)[1], (Double) ((Object[]) a)[1])) // Sort by similarity desc
+                    .map(obj -> convertToDTO((Product) ((Object[]) obj)[0]))
+                    .collect(Collectors.toList());
+            
+            log.info("Image search completed. Results: {}", results.size());
+            return results;
+
+        } catch (Exception e) {
+            log.error("Error in searchByImage", e);
+            return Collections.emptyList();
+        }
     }
 }

@@ -40,7 +40,9 @@ public class ReviewServiceImpl implements ReviewService {
                 .findByUserMaNguoiDungOrderByNgayTaoDesc(user.getMaNguoiDung());
 
         boolean daMua = donHangs.stream()
-                .filter(dh -> "Hoàn thành".equals(dh.getTrangThai()))
+                .filter(dh -> dh.getTrangThaiDonHang() != null
+                        && ("Đã duyệt".equals(dh.getTrangThaiDonHang().getTenTrangThai())
+                            || "Đã thanh toán".equals(dh.getTrangThaiDonHang().getTenTrangThai())))
                 .flatMap(dh -> dh.getChiTietDonHangs().stream())
                 .anyMatch(ct -> ct.getProduct().getMaSanPham().equals(request.getMaSanPham()));
 

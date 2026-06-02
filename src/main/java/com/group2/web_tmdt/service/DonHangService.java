@@ -1,22 +1,35 @@
 package com.group2.web_tmdt.service;
 
 import com.group2.web_tmdt.dto.DonHangDTO;
+import com.group2.web_tmdt.dto.PageResponse;
 
 import java.util.List;
 
 public interface DonHangService {
 
-    /** Tạo đơn hàng từ giỏ hàng hiện tại của user */
-    DonHangDTO taoDoHang(String email, String diaChiNhanHang, double chiPhiGiaoHang);
+    List<DonHangDTO> taoDoHang(String email, String diaChiNhanHang,
+                                double chiPhiGiaoHang, String phuongThucThanhToan);
 
-    /** Lấy danh sách đơn hàng của user */
     List<DonHangDTO> getDonHangCuaUser(String email);
 
-    /** Lấy chi tiết một đơn hàng */
     DonHangDTO getDonHangById(String email, int maDonHang);
 
-    /** Hủy đơn hàng (chỉ được hủy khi đang "Chờ xác nhận") */
     DonHangDTO huyDonHang(String email, int maDonHang, String lyDoHuy);
+
+    List<DonHangDTO> getSellOrdersOfSeller(String email, String trangThai);
+
+    DonHangDTO xacNhanDonHang(String sellerEmail, int maDonHang);
+
+    DonHangDTO huyDonHangBySeller(String sellerEmail, int maDonHang, String lyDoHuy);
+
+    PageResponse<DonHangDTO> getAllOrdersForAdmin(String status, int page, int size);
+
+    DonHangDTO adminConfirmOrder(int maDonHang);
+
+    DonHangDTO adminCancelOrder(int maDonHang, String lyDoHuy);
+
+    /** Admin: Cập nhật trạng thái đơn hàng sang trạng thái mới bất kỳ */
+    DonHangDTO updateOrderStatus(int maDonHang, String trangThaiMoi);
 
     DonHangDTO hoanThanhDonHang(String email, int maDonHang);
 }

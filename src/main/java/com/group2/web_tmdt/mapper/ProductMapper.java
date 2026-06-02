@@ -30,16 +30,8 @@ public class ProductMapper {
                 product.getTenSanPham(),
                 product.getSoLuong(),
                 product.getGiaSanPham(),
-                product.getThuongHieu(),
-                product.getMoTa(),
-                product.getMauSac(),
-                product.getKichCo(),
                 product.getUser().getEmail(),
-                product.getCategory().getTenTheLoai(),
-                product.getTinhTrang().getTenTinhTrang(),
                 product.getTrangThaiSanPham().getTenTrangThai(),
-                product.isActive(),
-                product.getSoLuongDaBan(),
                 images
         );
     }

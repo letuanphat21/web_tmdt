@@ -2,11 +2,16 @@ package com.group2.web_tmdt.controller;
 
 import com.group2.web_tmdt.dto.AdminUserDTO;
 import com.group2.web_tmdt.dto.ApiResponse;
+import com.group2.web_tmdt.dto.DonHangDTO;
 import com.group2.web_tmdt.dto.PageResponse;
 import com.group2.web_tmdt.service.AdminService;
+import com.group2.web_tmdt.service.DonHangService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -14,11 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
+    private final DonHangService donHangService;
 
-    /**
-     * GET /api/admin/users?page=0&size=10
-     * Lấy danh sách người dùng active với phân trang
-     */
+    // ─── User management ──────────────────────────────────────────────────────
+
+    /** GET /api/admin/users?page=0&size=10 */
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<PageResponse<AdminUserDTO>>> getUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -27,10 +32,7 @@ public class AdminController {
         return ApiResponse.ok("Lấy danh sách người dùng thành công!", response);
     }
 
-    /**
-     * GET /api/admin/users/search?q=keyword&page=0&size=10
-     * Tìm kiếm người dùng active theo keyword (tên, email)
-     */
+    /** GET /api/admin/users/search?q=keyword&page=0&size=10 */
     @GetMapping("/users/search")
     public ResponseEntity<ApiResponse<PageResponse<AdminUserDTO>>> searchUsers(
             @RequestParam("q") String keyword,
@@ -40,11 +42,7 @@ public class AdminController {
         return ApiResponse.ok("Tìm kiếm người dùng thành công!", response);
     }
 
-    /**
-     * PUT /api/admin/users/{id}/status
-     * Cập nhật trạng thái active của người dùng
-     * Body: { "trangThai": 1 } (1 = active, 0 = inactive)
-     */
+    /** PUT /api/admin/users/{id}/status */
     @PutMapping("/users/{id}/status")
     public ResponseEntity<ApiResponse<AdminUserDTO>> updateUserStatus(
             @PathVariable Long id,
@@ -53,20 +51,21 @@ public class AdminController {
         return ApiResponse.ok("Cập nhật trạng thái thành công!", response);
     }
 
-    /**
-     * DELETE /api/admin/users/{id}
-     * Xóa người dùng
-     */
+    /** DELETE /api/admin/users/{id} */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         adminService.deleteUser(id);
         return ApiResponse.ok("Xóa người dùng thành công!", null);
     }
 
-    /**
-     * GET /api/admin/users/hidden?page=0&size=10
-     * Lấy danh sách người dùng bị ẩn (active = false) với phân trang
-     */
+    /** POST /api/admin/users */
+    @PostMapping("/users")
+    public ResponseEntity<ApiResponse<AdminUserDTO>> createUser(@RequestBody AdminUserDTO userDTO) {
+        AdminUserDTO response = adminService.createUser(userDTO);
+        return ApiResponse.ok("Tạo người dùng thành công!", response);
+    }
+
+    /** GET /api/admin/users/hidden?page=0&size=10 */
     @GetMapping("/users/hidden")
     public ResponseEntity<ApiResponse<PageResponse<AdminUserDTO>>> getHiddenUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -75,10 +74,7 @@ public class AdminController {
         return ApiResponse.ok("Lấy danh sách người dùng bị ẩn thành công!", response);
     }
 
-    /**
-     * GET /api/admin/users/hidden/search?q=keyword&page=0&size=10
-     * Tìm kiếm người dùng bị ẩn (active = false) theo keyword
-     */
+    /** GET /api/admin/users/hidden/search?q=keyword&page=0&size=10 */
     @GetMapping("/users/hidden/search")
     public ResponseEntity<ApiResponse<PageResponse<AdminUserDTO>>> searchHiddenUsers(
             @RequestParam("q") String keyword,
@@ -86,6 +82,60 @@ public class AdminController {
             @RequestParam(defaultValue = "10") int size) {
         PageResponse<AdminUserDTO> response = adminService.searchHiddenUsers(keyword, page, size);
         return ApiResponse.ok("Tìm kiếm người dùng bị ẩn thành công!", response);
+    }
+
+    // ─── Order management ─────────────────────────────────────────────────────
+
+    /**
+     * GET /api/admin/orders?status=all&page=0&size=10
+     * Lấy tất cả đơn hàng với filter trạng thái và phân trang
+     */
+    @GetMapping("/orders")
+    public ResponseEntity<ApiResponse<PageResponse<DonHangDTO>>> getAllOrders(
+            @RequestParam(defaultValue = "all") String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageResponse<DonHangDTO> response = donHangService.getAllOrdersForAdmin(status, page, size);
+        return ApiResponse.ok("Lấy danh sách đơn hàng thành công!", response);
+    }
+
+    /**
+     * PUT /api/admin/orders/{id}/confirm
+     * Admin xác nhận đơn hàng → "Đã duyệt"
+     */
+    @PutMapping("/orders/{id}/confirm")
+    public ResponseEntity<ApiResponse<DonHangDTO>> adminConfirmOrder(@PathVariable int id) {
+        DonHangDTO donHang = donHangService.adminConfirmOrder(id);
+        return ApiResponse.ok("Xác nhận đơn hàng thành công!", donHang);
+    }
+
+    /**
+     * PUT /api/admin/orders/{id}/cancel
+     * Admin hủy đơn hàng → "Đã hủy"
+     */
+    @PutMapping("/orders/{id}/cancel")
+    public ResponseEntity<ApiResponse<DonHangDTO>> adminCancelOrder(
+            @PathVariable int id,
+            @RequestBody Map<String, Object> body) {
+        String lyDoHuy = (String) body.getOrDefault("lyDoHuy", "Admin hủy đơn");
+        DonHangDTO donHang = donHangService.adminCancelOrder(id, lyDoHuy);
+        return ApiResponse.ok("Hủy đơn hàng thành công!", donHang);
+    }
+
+    /**
+     * PUT /api/admin/orders/{id}/status
+     * Admin chuyển đổi trạng thái đơn hàng sang trạng thái khác
+     */
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<ApiResponse<DonHangDTO>> updateOrderStatus(
+            @PathVariable int id,
+            @RequestBody Map<String, Object> body) {
+        String trangThaiMoi = (String) body.get("trangThai");
+        if (trangThaiMoi == null || trangThaiMoi.isBlank()) {
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, "Vui lòng nhập trạng thái mới");
+        }
+        DonHangDTO donHang = donHangService.updateOrderStatus(id, trangThaiMoi);
+        return ApiResponse.ok("Cập nhật trạng thái đơn hàng thành công!", donHang);
     }
 
     @lombok.Data

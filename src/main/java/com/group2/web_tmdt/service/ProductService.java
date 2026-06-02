@@ -3,20 +3,21 @@ package com.group2.web_tmdt.service;
 import com.group2.web_tmdt.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface ProductService {
 
     /**
-     * Lấy danh sách sản phẩm mới nhất
+     * Lấy danh sách sản phẩm mới nhất, loại trừ sản phẩm của người bán đang đăng nhập (nếu có)
      */
-    List<ProductDTO> getNewestProducts(int limit);
+    List<ProductDTO> getNewestProducts(int limit, String excludeEmail);
 
     /**
-     * Lấy danh sách sản phẩm bán chạy nhất
+     * Lấy danh sách sản phẩm bán chạy nhất, loại trừ sản phẩm của người bán đang đăng nhập (nếu có)
      */
-    Page<ProductDTO> getBestSellingProducts(Pageable pageable);
+    Page<ProductDTO> getBestSellingProducts(Pageable pageable, String excludeEmail);
 
     /**
      * Lấy sản phẩm theo ID
@@ -34,10 +35,10 @@ public interface ProductService {
     List<ProductDTO> getProductsBySeller(long sellerId);
 
     /**
-     * Tìm kiếm sản phẩm với bộ lọc kết hợp
+     * Tìm kiếm sản phẩm với bộ lọc kết hợp (không bao gồm sản phẩm của người dùng hiện tại)
      */
     Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
-                                    Double minPrice, Double maxPrice, Pageable pageable);
+                                    Double minPrice, Double maxPrice, Long currentUserId, Pageable pageable);
 
 
     void postProduct(ProductForSaleRequest request,String email);
@@ -49,11 +50,20 @@ public interface ProductService {
 
     Page<ProductPendingDTO>  getPendingProducts(Pageable pageable);
 
-    Page<ProductSellerDTO> getProductsByUser(String email,Pageable pageable);
+    Page<ProductSellerDTO> getProductsByUser(String email, SellerListingFilter filter, Pageable pageable);
 
     void activeProduct(Long id, String email, boolean isAdmin);
 
     void deactiveProduct(Long id, String email, boolean isAdmin);
 
     void updateProduct(Long productId, ProductUpdateRequest request, String email, boolean isAdmin);
+
+    ProductSellerDTO getProductForManagement(long productId, boolean isAdmin);
+
+    Page<ProductAdminDTO> getProductsForAdmin(Pageable pageable,SellerListingFilter filter);
+
+    /**
+     * Tìm kiếm sản phẩm theo hình ảnh với mức tương đồng tối thiểu
+     */
+    List<ProductDTO> searchByImage(MultipartFile imageFile, Double threshold, Long currentUserId);
 }

@@ -2,7 +2,6 @@ package com.group2.web_tmdt.security;
 
 public class Endpoints {
     public static final String front_end_host = "http://localhost:5173";
-    public static final String front_end_host2 = "http://localhost:5174";
 
         public static final String[] PUBLIC_GET_ENDPOINTS = new String[] {
                         "/api/auth/kich-hoat",
@@ -12,7 +11,9 @@ public class Endpoints {
                         "/api/files/**",
                         "/api/products/search",
                         "/api/categories/**",
-                        "/api/statuses/**"
+                        "/api/statuses/**",
+                        "/api/payment/vnpay/ipn",
+                        "/api/comments",        // Xem bình luận không cần đăng nhập
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {
@@ -22,7 +23,7 @@ public class Endpoints {
                         "/api/auth/quen-mat-khau",
                         "/api/auth/xac-nhan-otp",
                         "/api/auth/dat-lai-mat-khau",
-
+                        "/api/products/search-by-image",
 
         };
 
@@ -33,6 +34,8 @@ public class Endpoints {
                         "/api/products/seller",
                         "/api/orders",
                         "/api/orders/**",
+                        "/api/conversations",
+                        "/api/conversations/*",
         };
 
         public static final String[] PRIVATE_POST_ENDPOINT = new String[] {
@@ -40,6 +43,8 @@ public class Endpoints {
                         "/api/cart/add",
                         "/api/products/post",
                         "/api/orders",
+                        "/api/payment/vnpay/create-payment",// Tạo URL thanh toán VNPAY
+                        "/api/conversations",
         };
 
         public static final String[] PRIVATE_PUT_ENDPOINT = new String[] {
@@ -58,5 +63,7 @@ public class Endpoints {
 
         public static final String[] ADMIN_GET_ENDPOINTS = new String[] {
                 "/api/products/pending",
+                "/api/products/admin",
+                "/api/products/*"
         };
 }

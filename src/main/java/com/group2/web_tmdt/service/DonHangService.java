@@ -30,4 +30,6 @@ public interface DonHangService {
 
     /** Admin: Cập nhật trạng thái đơn hàng sang trạng thái mới bất kỳ */
     DonHangDTO updateOrderStatus(int maDonHang, String trangThaiMoi);
+
+    DonHangDTO hoanThanhDonHang(String email, int maDonHang);
 }

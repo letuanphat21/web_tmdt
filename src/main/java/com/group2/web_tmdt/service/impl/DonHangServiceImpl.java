@@ -1,5 +1,6 @@
 package com.group2.web_tmdt.service.impl;
 
+import com.group2.web_tmdt.dao.*;
 import com.group2.web_tmdt.dao.ChiTietDonHangRepository;
 import com.group2.web_tmdt.dao.DonHangRepository;
 import com.group2.web_tmdt.dao.GioHangItemRepository;
@@ -8,6 +9,7 @@ import com.group2.web_tmdt.dao.TrangThaiDonHangRepository;
 import com.group2.web_tmdt.dao.UserRepository;
 import com.group2.web_tmdt.dto.ChiTietDonHangDTO;
 import com.group2.web_tmdt.dto.DonHangDTO;
+import com.group2.web_tmdt.entity.*;
 import com.group2.web_tmdt.dto.PageResponse;
 import com.group2.web_tmdt.entity.ChiTietDonHang;
 import com.group2.web_tmdt.entity.DonHang;
@@ -42,9 +44,10 @@ public class DonHangServiceImpl implements DonHangService {
     private final GioHangRepository gioHangRepository;
     private final GioHangItemRepository gioHangItemRepository;
     private final UserRepository userRepository;
+    private final GiaoDichRepository giaoDichRepository;
+    private final com.group2.web_tmdt.dao.ProductRepository productRepository;
     private final TrangThaiDonHangRepository trangThaiDonHangRepository;
     private final EmailService emailService;
-
     /**
      * Tạo đơn hàng — chia theo từng seller.
      *
@@ -372,7 +375,7 @@ public class DonHangServiceImpl implements DonHangService {
 
         TrangThaiDonHang trangThai = trangThaiDonHangRepository.findByTenTrangThai(trangThaiMoi)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái: " + trangThaiMoi));
-        
+
         donHang.setTrangThaiDonHang(trangThai);
         donHangRepository.save(donHang);
 
@@ -441,5 +444,65 @@ public class DonHangServiceImpl implements DonHangService {
         String ten = ((user.getHoDem() != null ? user.getHoDem() : "")
                 + " " + (user.getTen() != null ? user.getTen() : "")).trim();
         return ten.isBlank() ? user.getEmail() : ten;
+    }
+
+    @Override
+    @Transactional
+    public DonHangDTO hoanThanhDonHang(String email, int maDonHang) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        DonHang donHang = donHangRepository.findById(maDonHang)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        // Xác thực quyền (Chỉ người mua HOẶC Admin mới được thao tác)
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> "ROLE_ADMIN".equals(role.getTenQuyen()));
+
+        if (!isAdmin && donHang.getUser().getMaNguoiDung() != user.getMaNguoiDung()) {
+            throw new RuntimeException("Không có quyền thao tác trên đơn hàng này");
+        }
+
+        // Chặn cộng tiền 2 lần (dùng Object TrangThaiDonHang)
+        if (donHang.getTrangThaiDonHang() != null && "Thành công".equals(donHang.getTrangThaiDonHang().getTenTrangThai())) {
+            throw new RuntimeException("Đơn hàng này đã được hoàn tất và cộng tiền trước đó!");
+        }
+
+        // 1. Lấy trạng thái "Thành công" từ Database
+        TrangThaiDonHang trangThaiThanhCong = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
+
+        // Gán object trạng thái mới vào đơn hàng
+        donHang.setTrangThaiDonHang(trangThaiThanhCong);
+
+        // 2. Duyệt qua từng sản phẩm trong đơn để cộng tiền cho đúng Seller
+        for (ChiTietDonHang ct : donHang.getChiTietDonHangs()) {
+            Product sanPham = ct.getProduct();
+            User seller = sanPham.getUser(); // Truy xuất ra đúng người bán
+
+            double soTienCong = ct.getGiaBan() * ct.getSoLuong();
+
+            // A. Cộng tiền vào ví Seller
+            double soDuHienTai = seller.getSoDu() != null ? seller.getSoDu() : 0.0;
+            seller.setSoDu(soDuHienTai + soTienCong);
+            userRepository.save(seller);
+
+            // B. Ghi lịch sử giao dịch (Sao kê ví)
+            GiaoDich giaoDich = new GiaoDich();
+            giaoDich.setUser(seller);
+            giaoDich.setSoTien(soTienCong);
+            giaoDich.setLoaiGiaoDich("inflow");
+            giaoDich.setTrangThai("Thành công");
+            giaoDich.setMoTa("Tiền bán sản phẩm: " + sanPham.getTenSanPham() + " (Đơn #" + donHang.getMaDonHang() + ")");
+            giaoDichRepository.save(giaoDich);
+
+            // C. Tăng biến đếm số lượng đã bán của sản phẩm để làm thống kê
+            sanPham.setSoLuongDaBan(sanPham.getSoLuongDaBan() + ct.getSoLuong());
+            productRepository.save(sanPham);
+        }
+
+        donHangRepository.save(donHang);
+
+        return convertToDTO(donHang, donHang.getChiTietDonHangs());
     }
 }

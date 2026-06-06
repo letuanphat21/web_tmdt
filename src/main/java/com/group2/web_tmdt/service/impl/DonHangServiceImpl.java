@@ -274,9 +274,36 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Chờ duyệt'");
         }
 
-        TrangThaiDonHang trangThaiDaDuyet = trangThaiDonHangRepository.findByTenTrangThai("Đã duyệt")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Đã duyệt'"));
-        donHang.setTrangThaiDonHang(trangThaiDaDuyet);
+        TrangThaiDonHang trangThaiThanhCong = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
+        donHang.setTrangThaiDonHang(trangThaiThanhCong);
+
+        // Duyệt qua từng sản phẩm trong đơn để cộng tiền cho đúng Seller
+        for (ChiTietDonHang ct : donHang.getChiTietDonHangs()) {
+            Product sanPham = ct.getProduct();
+            User seller = sanPham.getUser(); // Truy xuất ra đúng người bán
+
+            double soTienCong = ct.getGiaBan() * ct.getSoLuong();
+
+            // A. Cộng tiền vào ví Seller
+            double soDuHienTai = seller.getSoDu() != null ? seller.getSoDu() : 0.0;
+            seller.setSoDu(soDuHienTai + soTienCong);
+            userRepository.save(seller);
+
+            // B. Ghi lịch sử giao dịch (Sao kê ví)
+            GiaoDich giaoDich = new GiaoDich();
+            giaoDich.setUser(seller);
+            giaoDich.setSoTien(soTienCong);
+            giaoDich.setLoaiGiaoDich("inflow");
+            giaoDich.setTrangThai("Thành công");
+            giaoDich.setMoTa("Tiền bán sản phẩm: " + sanPham.getTenSanPham() + " (Đơn #" + donHang.getMaDonHang() + ")");
+            giaoDichRepository.save(giaoDich);
+
+            // C. Tăng biến đếm số lượng đã bán của sản phẩm để làm thống kê
+            sanPham.setSoLuongDaBan(sanPham.getSoLuongDaBan() + ct.getSoLuong());
+            productRepository.save(sanPham);
+        }
+
         donHangRepository.save(donHang);
 
         return convertToDTO(donHang, donHang.getChiTietDonHangs());

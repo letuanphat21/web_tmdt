@@ -6,6 +6,7 @@ import com.group2.web_tmdt.entity.GiaoDich;
 import com.group2.web_tmdt.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +41,7 @@ public class ViController {
     }
 
     // 2. API Thực hiện rút tiền
+    @Transactional
     @PostMapping("/{maNguoiDung}/rut-tien")
     public ResponseEntity<?> rutTien(@PathVariable Long maNguoiDung, @RequestParam Double soTien) {
         Optional<User> userOpt = userRepository.findById(maNguoiDung);

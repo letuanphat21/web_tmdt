@@ -490,43 +490,12 @@ public class DonHangServiceImpl implements DonHangService {
             throw new RuntimeException("Không có quyền thao tác trên đơn hàng này");
         }
 
-        // Chặn cộng tiền 2 lần (dùng Object TrangThaiDonHang)
-        if (donHang.getTrangThaiDonHang() != null && "Thành công".equals(donHang.getTrangThaiDonHang().getTenTrangThai())) {
-            throw new RuntimeException("Đơn hàng này đã được hoàn tất và cộng tiền trước đó!");
-        }
-
         // 1. Lấy trạng thái "Thành công" từ Database
         TrangThaiDonHang trangThaiThanhCong = trangThaiDonHangRepository.findByTenTrangThai("Thành công")
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái 'Thành công'"));
 
-        // Gán object trạng thái mới vào đơn hàng
+        // 2. Gán object trạng thái mới vào đơn hàng
         donHang.setTrangThaiDonHang(trangThaiThanhCong);
-
-        // 2. Duyệt qua từng sản phẩm trong đơn để cộng tiền cho đúng Seller
-        for (ChiTietDonHang ct : donHang.getChiTietDonHangs()) {
-            Product sanPham = ct.getProduct();
-            User seller = sanPham.getUser(); // Truy xuất ra đúng người bán
-
-            double soTienCong = ct.getGiaBan() * ct.getSoLuong();
-
-            // A. Cộng tiền vào ví Seller
-            double soDuHienTai = seller.getSoDu() != null ? seller.getSoDu() : 0.0;
-            seller.setSoDu(soDuHienTai + soTienCong);
-            userRepository.save(seller);
-
-            // B. Ghi lịch sử giao dịch (Sao kê ví)
-            GiaoDich giaoDich = new GiaoDich();
-            giaoDich.setUser(seller);
-            giaoDich.setSoTien(soTienCong);
-            giaoDich.setLoaiGiaoDich("inflow");
-            giaoDich.setTrangThai("Thành công");
-            giaoDich.setMoTa("Tiền bán sản phẩm: " + sanPham.getTenSanPham() + " (Đơn #" + donHang.getMaDonHang() + ")");
-            giaoDichRepository.save(giaoDich);
-
-            // C. Tăng biến đếm số lượng đã bán của sản phẩm để làm thống kê
-            sanPham.setSoLuongDaBan(sanPham.getSoLuongDaBan() + ct.getSoLuong());
-            productRepository.save(sanPham);
-        }
 
         donHangRepository.save(donHang);
 

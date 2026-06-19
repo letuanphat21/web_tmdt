@@ -2,9 +2,11 @@ package com.group2.web_tmdt.controller;
 
 import com.group2.web_tmdt.dto.AdminUserDTO;
 import com.group2.web_tmdt.dto.ApiResponse;
+import com.group2.web_tmdt.dto.CategoryDTO;
 import com.group2.web_tmdt.dto.DonHangDTO;
 import com.group2.web_tmdt.dto.PageResponse;
 import com.group2.web_tmdt.service.AdminService;
+import com.group2.web_tmdt.service.CategoryService;
 import com.group2.web_tmdt.service.DonHangService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final DonHangService donHangService;
+    private final CategoryService categoryService;
 
     // ─── User management ──────────────────────────────────────────────────────
 
@@ -136,6 +139,50 @@ public class AdminController {
         }
         DonHangDTO donHang = donHangService.updateOrderStatus(id, trangThaiMoi);
         return ApiResponse.ok("Cập nhật trạng thái đơn hàng thành công!", donHang);
+    }
+
+    // ─── Category management ──────────────────────────────────────────────────
+
+    /** GET /api/admin/categories?page=0&size=10 */
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse<PageResponse<CategoryDTO>>> getCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageResponse<CategoryDTO> response = categoryService.getAllCategories(page, size);
+        return ApiResponse.ok("Lấy danh sách danh mục thành công!", response);
+    }
+
+    /** GET /api/admin/categories/search?q=keyword&page=0&size=10 */
+    @GetMapping("/categories/search")
+    public ResponseEntity<ApiResponse<PageResponse<CategoryDTO>>> searchCategories(
+            @RequestParam("q") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageResponse<CategoryDTO> response = categoryService.searchCategories(keyword, page, size);
+        return ApiResponse.ok("Tìm kiếm danh mục thành công!", response);
+    }
+
+    /** POST /api/admin/categories */
+    @PostMapping("/categories")
+    public ResponseEntity<ApiResponse<CategoryDTO>> createCategory(@RequestBody CategoryDTO categoryDTO) {
+        CategoryDTO response = categoryService.createCategory(categoryDTO);
+        return ApiResponse.ok("Tạo danh mục thành công!", response);
+    }
+
+    /** PUT /api/admin/categories/{id} */
+    @PutMapping("/categories/{id}")
+    public ResponseEntity<ApiResponse<CategoryDTO>> updateCategory(
+            @PathVariable int id,
+            @RequestBody CategoryDTO categoryDTO) {
+        CategoryDTO response = categoryService.updateCategory(id, categoryDTO);
+        return ApiResponse.ok("Cập nhật danh mục thành công!", response);
+    }
+
+    /** DELETE /api/admin/categories/{id} */
+    @DeleteMapping("/categories/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable int id) {
+        categoryService.deleteCategory(id);
+        return ApiResponse.ok("Xóa danh mục thành công!", null);
     }
 
     @lombok.Data

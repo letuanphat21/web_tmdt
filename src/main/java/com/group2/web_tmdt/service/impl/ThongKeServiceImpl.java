@@ -7,6 +7,7 @@ import com.group2.web_tmdt.service.ThongKeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -25,5 +26,15 @@ public class ThongKeServiceImpl implements ThongKeService {
     @Override
     public List<DoanhThuDanhMucDTO> getDoanhThuTheoDanhMuc(int maSeller, int thang, int nam) {
         return thongKeRepository.thongKeDoanhThuTheoDanhMuc(maSeller, thang, nam);
+    }
+
+    @Override
+    public List<DoanhThuNgayDTO> getDoanhThuTheoKhoangNgay(int maSeller, LocalDate tuNgay, LocalDate denNgay) {
+        return thongKeRepository.thongKeDoanhThuTheoKhoangNgay(maSeller, tuNgay, denNgay);
+    }
+
+    @Override
+    public List<DoanhThuDanhMucDTO> getDoanhThuTheoDanhMucKhoangNgay(int maSeller, LocalDate tuNgay, LocalDate denNgay) {
+        return thongKeRepository.thongKeDoanhThuTheoDanhMucKhoangNgay(maSeller, tuNgay, denNgay);
     }
 }

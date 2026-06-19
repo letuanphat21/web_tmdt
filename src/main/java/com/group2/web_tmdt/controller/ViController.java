@@ -25,6 +25,7 @@ public class ViController {
     private GiaoDichRepository giaoDichRepository;
 
     // 1. API Lấy số dư và lịch sử giao dịch
+    @Transactional
     @GetMapping("/{maNguoiDung}")
     public ResponseEntity<?> layThongTinVi(@PathVariable Long maNguoiDung) {
         Optional<User> userOpt = userRepository.findById(maNguoiDung);

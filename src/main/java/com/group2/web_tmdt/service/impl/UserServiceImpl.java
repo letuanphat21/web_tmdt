@@ -262,6 +262,7 @@ public class UserServiceImpl implements UserService {
 
     private UserProfileResponse mapToProfileResponse(User user) {
         UserProfileResponse res = new UserProfileResponse();
+        res.setMaNguoiDung(user.getMaNguoiDung());
         res.setEmail(user.getEmail());
         res.setHoDem(user.getHoDem());
         res.setTen(user.getTen());

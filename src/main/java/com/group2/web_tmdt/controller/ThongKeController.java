@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RequestMapping("/api/thong-ke")
@@ -38,5 +39,25 @@ public class ThongKeController {
         List<DoanhThuDanhMucDTO> result = thongKeService.getDoanhThuTheoDanhMuc(maSeller, thang, nam);
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/seller/{maSeller}/khoang-ngay")
+    public ResponseEntity<List<DoanhThuNgayDTO>> layDoanhThuTheoKhoangNgay(
+            @PathVariable("maSeller") int maSeller,
+            @RequestParam("tuNgay") String tuNgay,
+            @RequestParam("denNgay") String denNgay) {
+        LocalDate from = LocalDate.parse(tuNgay);
+        LocalDate to = LocalDate.parse(denNgay);
+        return ResponseEntity.ok(thongKeService.getDoanhThuTheoKhoangNgay(maSeller, from, to));
+    }
+
+    @GetMapping("/seller/{maSeller}/danh-muc/khoang-ngay")
+    public ResponseEntity<List<DoanhThuDanhMucDTO>> layDoanhThuDanhMucTheoKhoangNgay(
+            @PathVariable("maSeller") int maSeller,
+            @RequestParam("tuNgay") String tuNgay,
+            @RequestParam("denNgay") String denNgay) {
+        LocalDate from = LocalDate.parse(tuNgay);
+        LocalDate to = LocalDate.parse(denNgay);
+        return ResponseEntity.ok(thongKeService.getDoanhThuTheoDanhMucKhoangNgay(maSeller, from, to));
     }
 }

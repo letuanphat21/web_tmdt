@@ -129,9 +129,9 @@ public class CategoryServiceImpl implements CategoryService {
             long activeProducts = category.getProducts().stream()
                     .filter(p -> p.isActive() && p.getTrangThaiSanPham() != null && p.getTrangThaiSanPham().getId() == 2)
                     .count();
-            dto.setSoSanPham((int) activeProducts);
+            dto.setSoSanPham(activeProducts);
         } else {
-            dto.setSoSanPham(0);
+            dto.setSoSanPham(0L);
         }
         
         return dto;

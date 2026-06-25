@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CategoryDTO {
 
-    private int maTheLoai;
+    private Integer maTheLoai;
 
     private String tenTheLoai;
 
-    private long soSanPham; // Số sản phẩm trong danh mục
+    private Long soSanPham; // Số sản phẩm trong danh mục
 }
+

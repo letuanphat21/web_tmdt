@@ -1,17 +1,21 @@
 package com.group2.web_tmdt.service.impl;
 
 import com.group2.web_tmdt.dao.UserRepository;
+import com.group2.web_tmdt.dao.RoleRepository;
 import com.group2.web_tmdt.dto.AdminUserDTO;
 import com.group2.web_tmdt.dto.PageResponse;
 import com.group2.web_tmdt.entity.User;
+import com.group2.web_tmdt.entity.Role;
 import com.group2.web_tmdt.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +25,8 @@ import java.util.stream.Collectors;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,10 +58,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public void deleteUser(Long maNguoiDung) {
-        if (!userRepository.existsById(maNguoiDung)) {
-            throw new RuntimeException("Người dùng không tồn tại");
-        }
-        userRepository.deleteById(maNguoiDung);
+        User user = userRepository.findById(maNguoiDung)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+        user.setActive(false);
+        userRepository.save(user);
     }
 
     @Override
@@ -89,11 +95,46 @@ public class AdminServiceImpl implements AdminService {
         user.setGioiTinh(userDTO.getGioiTinh());
         user.setBirthDay(userDTO.getNgaySinh());
         user.setActive(true); // Mặc định active = true
-        // Password sẽ được mã hóa nếu có (set ở controller)
-        user.setMatKhau("a1234567"); // Default password
+        user.setDaKichHoat(true); // Kích hoạt ngay khi Admin tạo
+        user.setNgayDangKy(LocalDateTime.now());
+
+        // Gán quyền ROLE_USER mặc định
+        Role roleUser = roleRepository.findByTenQuyen("ROLE_USER").orElse(null);
+        if (roleUser != null) {
+            user.setRoles(List.of(roleUser));
+        }
+
+        // Mã hóa mật khẩu mặc định "a1234567"
+        user.setMatKhau(passwordEncoder.encode("a1234567"));
 
         User savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
+    }
+
+    @Override
+    public AdminUserDTO updateUser(Long maNguoiDung, AdminUserDTO userDTO) {
+        User user = userRepository.findById(maNguoiDung)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+
+        // Kiểm tra email trùng nếu thay đổi
+        if (userDTO.getEmail() != null && !userDTO.getEmail().equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
+                throw new RuntimeException("Email đã được sử dụng");
+            }
+            user.setEmail(userDTO.getEmail());
+        }
+
+        user.setHoDem(userDTO.getHoDem());
+        user.setTen(userDTO.getTen());
+        user.setDiaChi(userDTO.getDiaChi());
+        user.setGioiTinh(userDTO.getGioiTinh());
+        user.setBirthDay(userDTO.getNgaySinh());
+        if (userDTO.getTrangThai() != null) {
+            user.setActive(userDTO.getTrangThai() == 1);
+        }
+
+        User updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
     }
 
     private PageResponse<AdminUserDTO> buildPageResponse(Page<User> userPage) {

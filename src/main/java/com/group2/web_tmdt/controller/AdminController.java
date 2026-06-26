@@ -68,6 +68,15 @@ public class AdminController {
         return ApiResponse.ok("Tạo người dùng thành công!", response);
     }
 
+    /** PUT /api/admin/users/{id} */
+    @PutMapping("/users/{id}")
+    public ResponseEntity<ApiResponse<AdminUserDTO>> updateUser(
+            @PathVariable Long id,
+            @RequestBody AdminUserDTO userDTO) {
+        AdminUserDTO response = adminService.updateUser(id, userDTO);
+        return ApiResponse.ok("Cập nhật thông tin người dùng thành công!", response);
+    }
+
     /** GET /api/admin/users/hidden?page=0&size=10 */
     @GetMapping("/users/hidden")
     public ResponseEntity<ApiResponse<PageResponse<AdminUserDTO>>> getHiddenUsers(

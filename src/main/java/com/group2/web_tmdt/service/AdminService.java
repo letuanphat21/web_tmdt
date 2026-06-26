@@ -38,4 +38,9 @@ public interface AdminService {
      * Tạo người dùng mới
      */
     AdminUserDTO createUser(AdminUserDTO userDTO);
+
+    /**
+     * Cập nhật thông tin người dùng
+     */
+    AdminUserDTO updateUser(Long maNguoiDung, AdminUserDTO userDTO);
 }

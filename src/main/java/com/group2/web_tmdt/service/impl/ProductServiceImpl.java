@@ -256,6 +256,8 @@ public class ProductServiceImpl implements ProductService {
             case ACTIVE -> productRepository.findActiveListingsByUser(user, pageable);
             case PENDING -> productRepository.findPendingByUser(user, pageable);
             case SOLD_OUT -> productRepository.findSoldOutByUser(user, pageable);
+            case DEACTIVE -> productRepository.findDeactiveListingsByUser(user,pageable);
+            case REJECTED -> productRepository.findRejectListingsByUser(user,pageable);
             default -> productRepository.findByUser(user, pageable);
         };
 
@@ -342,8 +344,8 @@ public class ProductServiceImpl implements ProductService {
         }
 
         if (request.getSoLuong() != null) {
-            if (request.getSoLuong() < 1) {
-                throw new BusinessException("Số lượng phải lớn hơn hoặc bằng 1");
+            if (request.getSoLuong() < 0) {
+                throw new BusinessException("Số lượng phải lớn hơn hoặc bằng 0");
             }
             if (request.getSoLuong() < product.getSoLuongDaBan()) {
                 throw new BusinessException(
@@ -409,6 +411,16 @@ public class ProductServiceImpl implements ProductService {
                     );
             product.setTinhTrang(tinhTrang);
         }
+
+        if(request.getStatusId() !=null){
+            TrangThaiSanPham trangThaiSanPham = trangThaiSanPhamRepository.findById(request.getStatusId())
+                    .orElseThrow(() -> new BusinessException(
+                            HttpStatus.NOT_FOUND,
+                            "Tình trạng sản phẩm không tồn tại"
+                    ));
+            product.setTrangThaiSanPham(trangThaiSanPham);
+        }
+
 
         if (request.getDeleteImageIds() != null && !request.getDeleteImageIds().isEmpty()) {
             for (Integer imageId : request.getDeleteImageIds()) {

@@ -36,6 +36,7 @@ public class ProductSellerMapper {
                 product.getMauSac(),
                 product.getKichCo(),
                 product.getTrangThaiSanPham().getTenTrangThai(),
+                product.getTrangThaiSanPham().getId(),
                 product.getCategory().getMaTheLoai(),
                 product.getCategory().getTenTheLoai(),
                 product.getTinhTrang().getMaTinhTrang(),

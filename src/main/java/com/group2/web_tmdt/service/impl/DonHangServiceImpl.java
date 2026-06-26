@@ -494,8 +494,9 @@ public class DonHangServiceImpl implements DonHangService {
                                         + donHang.getMaDonHang() + ")");
                         giaoDichRepository.save(giaoDich);
 
-                        // Tăng số lượng đã bán
+                        // Tăng số lượng đã bán và giảm số lượng tồn kho
                         sanPham.setSoLuongDaBan(sanPham.getSoLuongDaBan() + ct.getSoLuong());
+                        sanPham.setSoLuong(Math.max(0, sanPham.getSoLuong() - ct.getSoLuong()));
                         productRepository.save(sanPham);
                 }
         }

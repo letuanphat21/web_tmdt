@@ -104,6 +104,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.user = :user AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.soLuong <= 0")
     Page<Product> findSoldOutByUser(@Param("user") User user, Pageable pageable);
 
+    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.trangThaiSanPham.tenTrangThai = 'REJECTED'")
+    Page<Product> findRejectListingsByUser(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.active = false")
+    Page<Product> findDeactiveListingsByUser(@Param("user") User user, Pageable pageable);
+
 
 
 

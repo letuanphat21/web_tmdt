@@ -35,19 +35,19 @@ public class ReviewServiceImpl implements ReviewService {
         Product product = productRepository.findById(request.getMaSanPham())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
-        // Kiểm tra user đã mua sản phẩm này chưa (có đơn hàng "Hoàn thành" chứa sản phẩm)
+        // Dùng query có FETCH JOIN để tránh lazy load chiTietDonHangs
         List<DonHang> donHangs = donHangRepository
-                .findByUserMaNguoiDungOrderByNgayTaoDesc(user.getMaNguoiDung());
+                .findByUserWithDetails(user.getMaNguoiDung());
 
         boolean daMua = donHangs.stream()
                 .filter(dh -> dh.getTrangThaiDonHang() != null
                         && ("Đã duyệt".equals(dh.getTrangThaiDonHang().getTenTrangThai())
-                            || "Đã thanh toán".equals(dh.getTrangThaiDonHang().getTenTrangThai())))
+                            || "Thành công".equals(dh.getTrangThaiDonHang().getTenTrangThai())))
                 .flatMap(dh -> dh.getChiTietDonHangs().stream())
-                .anyMatch(ct -> ct.getProduct().getMaSanPham().equals(request.getMaSanPham()));
+                .anyMatch(ct -> ct.getProduct().getMaSanPham() == request.getMaSanPham());
 
         if (!daMua) {
-            throw new RuntimeException("Bạn chỉ có thể đánh giá sản phẩm đã mua và đơn hàng đã hoàn thành");
+            throw new RuntimeException("Bạn chỉ có thể đánh giá sản phẩm khi đơn hàng đã được duyệt");
         }
 
         // Kiểm tra đã đánh giá chưa
@@ -87,5 +87,20 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         return reviewRepository.existsByProductMaSanPhamAndUserMaNguoiDung(
                 maSanPham, user.getMaNguoiDung());
+    }
+
+    @Override
+    public boolean coTheDanhGia(String email, long maSanPham) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        List<DonHang> donHangs = donHangRepository.findByUserWithDetails(user.getMaNguoiDung());
+
+        return donHangs.stream()
+                .filter(dh -> dh.getTrangThaiDonHang() != null
+                        && ("Đã duyệt".equals(dh.getTrangThaiDonHang().getTenTrangThai())
+                            || "Thành công".equals(dh.getTrangThaiDonHang().getTenTrangThai())))
+                .flatMap(dh -> dh.getChiTietDonHangs().stream())
+                .anyMatch(ct -> ct.getProduct().getMaSanPham() == maSanPham);
     }
 }

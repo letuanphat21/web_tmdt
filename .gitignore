@@ -33,6 +33,7 @@ build/
 .vscode/
 **/application-dev.properties
 **/application-oauth2.properties
+**/application.properties
 
 node_modules/
 target/

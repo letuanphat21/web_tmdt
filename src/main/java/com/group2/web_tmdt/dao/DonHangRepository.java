@@ -17,6 +17,13 @@ public interface DonHangRepository extends JpaRepository<DonHang, Integer> {
     @Query("SELECT DISTINCT dh FROM DonHang dh " +
            "LEFT JOIN FETCH dh.chiTietDonHangs ct " +
            "LEFT JOIN FETCH ct.product p " +
+           "WHERE dh.user.maNguoiDung = :maNguoiDung " +
+           "ORDER BY dh.ngayTao DESC")
+    List<DonHang> findByUserWithDetails(@org.springframework.data.repository.query.Param("maNguoiDung") long maNguoiDung);
+
+    @Query("SELECT DISTINCT dh FROM DonHang dh " +
+           "LEFT JOIN FETCH dh.chiTietDonHangs ct " +
+           "LEFT JOIN FETCH ct.product p " +
            "LEFT JOIN FETCH p.user " +
            "ORDER BY dh.ngayTao DESC")
     List<DonHang> findAllWithDetails();

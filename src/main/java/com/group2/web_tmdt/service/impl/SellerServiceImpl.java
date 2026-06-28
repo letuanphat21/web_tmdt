@@ -53,20 +53,24 @@ public class SellerServiceImpl implements SellerService {
         dto.setDiaChi(user.getDiaChi());
         dto.setAvatar(user.getAvatar());
 
-        // Tính số sản phẩm active=1 và ma_trang_thai=2
+        // Tính số sản phẩm APPROVED + active
         if (user.getProducts() != null) {
             long activeProducts = user.getProducts().stream()
-                    .filter(p -> p.isActive() && p.getTrangThaiSanPham() != null && p.getTrangThaiSanPham().getId() == 2)
+                    .filter(p -> p.isActive()
+                            && p.getTrangThaiSanPham() != null
+                            && "APPROVED".equals(p.getTrangThaiSanPham().getTenTrangThai()))
                     .count();
             dto.setSoSanPham(activeProducts);
         } else {
             dto.setSoSanPham(0);
         }
 
-        // Tính xếp hạng người bán (dựa trên đánh giá của các sản phẩm active=1 và ma_trang_thai=2)
-        double avgRating = user.getProducts() != null ? 
+        // Tính xếp hạng người bán
+        double avgRating = user.getProducts() != null ?
                 user.getProducts().stream()
-                    .filter(p -> p.isActive() && p.getTrangThaiSanPham() != null && p.getTrangThaiSanPham().getId() == 2)
+                    .filter(p -> p.isActive()
+                            && p.getTrangThaiSanPham() != null
+                            && "APPROVED".equals(p.getTrangThaiSanPham().getTenTrangThai()))
                     .filter(p -> p.getReviews() != null && !p.getReviews().isEmpty())
                     .flatMapToDouble(p -> p.getReviews().stream()
                             .mapToDouble(r -> r.getDiemXepHang()))

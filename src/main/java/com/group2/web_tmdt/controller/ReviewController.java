@@ -43,4 +43,16 @@ public class ReviewController {
         boolean daDanhGia = reviewService.daDanhGia(userDetails.getUsername(), maSanPham);
         return ApiResponse.ok("OK", Map.of("daDanhGia", daDanhGia));
     }
+
+    /**
+     * GET /api/reviews/can-review?maSanPham=1
+     * Kiểm tra user có thể đánh giá không (đã mua + đơn Thành công/Đã duyệt)
+     */
+    @GetMapping("/can-review")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> coTheDanhGia(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam long maSanPham) {
+        boolean coThe = reviewService.coTheDanhGia(userDetails.getUsername(), maSanPham);
+        return ApiResponse.ok("OK", Map.of("coTheDanhGia", coThe));
+    }
 }

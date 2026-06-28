@@ -22,9 +22,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByCategoryMaTheLoai(@Param("maTheLoai") int maTheLoai);
 
     /**
-     * Lấy sản phẩm theo người dùng (người bán) - chỉ lấy sản phẩm active=1 và APPROVED
+     * Lấy sản phẩm theo người dùng (người bán) - chỉ lấy sản phẩm active=1 và APPROVED và còn hàng
      */
-    @Query("SELECT p FROM Product p WHERE p.user.maNguoiDung = :maNguoiDung AND p.active = true AND p.trangThaiSanPham.tenTrangThai = 'APPROVED'")
+    @Query("SELECT p FROM Product p WHERE p.user.maNguoiDung = :maNguoiDung AND p.active = true AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.soLuong > 0")
     List<Product> findByUserMaNguoiDung(@Param("maNguoiDung") long maNguoiDung);
 
     /**

@@ -31,7 +31,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * Lấy sản phẩm bán chạy nhất
      */
     @Query("SELECT p FROM Product p " +
-           "WHERE p.active = true AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' " +
+           "WHERE p.active = true AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.soLuong > 0 " +
            "AND (:excludeEmail IS NULL OR p.user.email != :excludeEmail) " +
            "ORDER BY p.soLuongDaBan DESC")
     Page<Product> findBestSellingProducts(@Param("excludeEmail") String excludeEmail, Pageable pageable);
@@ -40,7 +40,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * Lấy danh sách sản phẩm mới nhất
      */
     @Query("SELECT p FROM Product p " +
-           "WHERE p.active = true AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' " +
+           "WHERE p.active = true AND p.trangThaiSanPham.tenTrangThai = 'APPROVED' AND p.soLuong > 0 " +
            "AND (:excludeEmail IS NULL OR p.user.email != :excludeEmail) " +
            "ORDER BY p.maSanPham DESC")
     List<Product> findNewestProducts(@Param("excludeEmail") String excludeEmail, Pageable pageable);

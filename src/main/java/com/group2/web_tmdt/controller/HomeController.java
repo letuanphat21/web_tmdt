@@ -44,7 +44,9 @@ public class HomeController {
 
     @GetMapping("/categories")
     public ResponseEntity<ApiResponse<List<CategoryDTO>>> getCategories() {
-        List<CategoryDTO> categories = categoryService.getAllCategories();
+        List<CategoryDTO> categories = categoryService.getAllCategories().stream()
+                .filter(c -> c.getActive() == null || Boolean.TRUE.equals(c.getActive()))
+                .collect(java.util.stream.Collectors.toList());
         return ApiResponse.ok("Lấy danh sách danh mục thành công!", categories);
     }
 

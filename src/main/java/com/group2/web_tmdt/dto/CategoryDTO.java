@@ -14,5 +14,7 @@ public class CategoryDTO {
     private String tenTheLoai;
 
     private Long soSanPham; // Số sản phẩm trong danh mục
+
+    private Boolean active;
 }
 

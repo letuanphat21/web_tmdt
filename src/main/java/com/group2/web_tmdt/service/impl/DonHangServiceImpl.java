@@ -435,6 +435,8 @@ public class DonHangServiceImpl implements DonHangService {
                                 User seller = firstProduct.getUser();
                                 dto.setTenNguoiBan(buildTenNguoiDung(seller));
                                 dto.setEmailNguoiBan(seller.getEmail());
+                                dto.setTenShop(buildTenNguoiDung(seller));
+                                dto.setSdtShop(seller.getSoDienThoai());
                         }
                 }
 

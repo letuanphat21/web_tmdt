@@ -71,6 +71,11 @@ public class CategoryServiceImpl implements CategoryService {
         }
         Category category = new Category();
         category.setTenTheLoai(categoryDTO.getTenTheLoai().trim());
+        if (categoryDTO.getActive() != null) {
+            category.setActive(categoryDTO.getActive());
+        } else {
+            category.setActive(true);
+        }
         Category savedCategory = categoryRepository.save(category);
         return convertToDTO(savedCategory);
     }
@@ -89,6 +94,9 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         category.setTenTheLoai(categoryDTO.getTenTheLoai().trim());
+        if (categoryDTO.getActive() != null) {
+            category.setActive(categoryDTO.getActive());
+        }
         Category updatedCategory = categoryRepository.save(category);
         return convertToDTO(updatedCategory);
     }
@@ -97,10 +105,8 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(int id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
-        if (category.getProducts() != null && !category.getProducts().isEmpty()) {
-            throw new RuntimeException("Danh mục đang chứa sản phẩm, không thể xóa!");
-        }
-        categoryRepository.deleteById(id);
+        category.setActive(false);
+        categoryRepository.save(category);
     }
 
     private PageResponse<CategoryDTO> buildPageResponse(Page<Category> categoryPage) {
@@ -123,6 +129,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryDTO dto = new CategoryDTO();
         dto.setMaTheLoai(category.getMaTheLoai());
         dto.setTenTheLoai(category.getTenTheLoai());
+        dto.setActive(category.getActive());
         
         // Tính số sản phẩm active=1 và ma_trang_thai=2 trong danh mục
         if (category.getProducts() != null) {

@@ -313,6 +313,42 @@ public class DonHangServiceImpl implements DonHangService {
                 donHang.setLyDoHuy(lyDoHuy != null ? lyDoHuy : "Người bán hủy đơn");
                 donHangRepository.save(donHang);
 
+                // Gửi email thông báo cho buyer (async)
+                try {
+                        String tenShop = "Cửa hàng OReMA";
+                        if (donHang.getChiTietDonHangs() != null && !donHang.getChiTietDonHangs().isEmpty()) {
+                                var firstProduct = donHang.getChiTietDonHangs().get(0).getProduct();
+                                if (firstProduct != null && firstProduct.getUser() != null) {
+                                        tenShop = buildTenNguoiDung(firstProduct.getUser());
+                                }
+                        }
+
+                        StringBuilder chiTietText = new StringBuilder();
+                        if (donHang.getChiTietDonHangs() != null) {
+                                for (ChiTietDonHang ct : donHang.getChiTietDonHangs()) {
+                                        chiTietText.append("  - ")
+                                                        .append(ct.getProduct().getTenSanPham())
+                                                        .append(" x").append(ct.getSoLuong())
+                                                        .append(" (")
+                                                        .append(String.format("%,.0f", ct.getGiaBan()))
+                                                        .append(" VND)\n");
+                                }
+                        }
+                        String buyerEmail = donHang.getUser().getEmail();
+                        String buyerName = buildTenNguoiDung(donHang.getUser());
+
+                        emailService.guiEmailHuyDonHangChoBuyer(
+                                        buyerEmail,
+                                        buyerName,
+                                        donHang.getMaDonHang(),
+                                        tenShop,
+                                        donHang.getLyDoHuy(),
+                                        chiTietText.toString()
+                        );
+                } catch (Exception e) {
+                        System.err.println("[EMAIL ERROR] Huy don hang " + maDonHang + ": " + e.getMessage());
+                }
+
                 return convertToDTO(donHang, donHang.getChiTietDonHangs());
         }
 

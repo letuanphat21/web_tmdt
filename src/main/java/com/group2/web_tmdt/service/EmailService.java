@@ -11,4 +11,8 @@ public interface EmailService {
     void guiEmailDonHangMoiChoSeller(String sellerEmail, String buyerName,
                                       int maDonHang, String diaChiNhanHang,
                                       double tongTien, String chiTietSanPham);
+
+    void guiEmailHuyDonHangChoBuyer(String buyerEmail, String buyerName,
+                                    int maDonHang, String tenShop,
+                                    String lyDoHuy, String chiTietSanPham);
 }

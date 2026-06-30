@@ -37,4 +37,23 @@ public class ThongKeServiceImpl implements ThongKeService {
     public List<DoanhThuDanhMucDTO> getDoanhThuTheoDanhMucKhoangNgay(int maSeller, LocalDate tuNgay, LocalDate denNgay) {
         return thongKeRepository.thongKeDoanhThuTheoDanhMucKhoangNgay(maSeller, tuNgay, denNgay);
     }
+
+    @Override
+    public com.group2.web_tmdt.dto.AdminThongKeDTO getAdminThongKe(int nam) {
+        double tongDoanhThu = thongKeRepository.countTongDoanhThu();
+        long tongDonHang = thongKeRepository.countTongDonHang();
+        long tongKhachHang = thongKeRepository.countTongKhachHang();
+        long tongCuaHang = thongKeRepository.countTongCuaHang();
+        List<com.group2.web_tmdt.dto.DoanhThuThangDTO> doanhThuTheoThang = thongKeRepository.thongKeDoanhThuNamTheoThang(nam);
+        List<DoanhThuDanhMucDTO> doanhThuTheoDanhMuc = thongKeRepository.thongKeDoanhThuNamTheoDanhMuc(nam);
+
+        return com.group2.web_tmdt.dto.AdminThongKeDTO.builder()
+                .tongDoanhThu(tongDoanhThu)
+                .tongDonHang(tongDonHang)
+                .tongKhachHang(tongKhachHang)
+                .tongCuaHang(tongCuaHang)
+                .doanhThuTheoThang(doanhThuTheoThang)
+                .doanhThuTheoDanhMuc(doanhThuTheoDanhMuc)
+                .build();
+    }
 }

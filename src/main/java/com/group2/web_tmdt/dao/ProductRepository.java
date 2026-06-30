@@ -68,8 +68,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     @Query(value = "SELECT p FROM Product p WHERE " +
            "(:tenSanPham IS NULL OR LOWER(p.tenSanPham) LIKE LOWER(CONCAT('%', :tenSanPham, '%'))) " +
-           "AND (:maTheLoai IS NULL OR p.category.maTheLoai = :maTheLoai) " +
-           "AND (:maTinhTrang IS NULL OR p.tinhTrang.maTinhTrang = :maTinhTrang) " +
+           "AND (:categoryId IS NULL OR p.category.maTheLoai IN :categoryId) " +
+           "AND (:statusId IS NULL OR p.tinhTrang.maTinhTrang IN :statusId) " +
            "AND (:giaMin IS NULL OR p.giaSanPham >= :giaMin) " +
            "AND (:giaMax IS NULL OR p.giaSanPham <= :giaMax) " +
            "AND p.active = true " +
@@ -77,8 +77,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
            "AND (:currentUserId IS NULL OR p.user.maNguoiDung != :currentUserId)")
     Page<Product> searchProducts(
             @Param("tenSanPham") String tenSanPham,
-            @Param("maTheLoai") Integer maTheLoai,
-            @Param("maTinhTrang") Integer maTinhTrang,
+            @Param("categoryId") List<Integer> categoryId,
+            @Param("statusId") List<Integer> statusId,
             @Param("giaMin") Double giaMin,
             @Param("giaMax") Double giaMax,
             @Param("currentUserId") Long currentUserId,

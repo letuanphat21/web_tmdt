@@ -48,8 +48,8 @@ public class SearchController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProductDTO>>> searchProducts(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) Integer statusId,
+            @RequestParam(required = false) List<Integer> categoryId,
+            @RequestParam(required = false) List<Integer> statusId,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(defaultValue = "0") int page,

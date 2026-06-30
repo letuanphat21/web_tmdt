@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 
@@ -30,10 +31,11 @@ public class ProductController {
         @GetMapping("/search")
         public ResponseEntity<ApiResponse<Page<ProductDTO>>> searchProducts(
                         @RequestParam(required = false) String keyword,
-                        @RequestParam(required = false) Integer categoryId,
-                        @RequestParam(required = false) Integer statusId,
+                        @RequestParam(required = false) List<Integer> categoryId,
+                        @RequestParam(required = false) List<Integer> statusId,
                         @RequestParam(required = false) Double minPrice,
                         @RequestParam(required = false) Double maxPrice,
+                        @RequestParam(required = false) String direction,
                         Authentication authentication,
                         Pageable pageable) {
 
@@ -49,6 +51,15 @@ public class ProductController {
                     } catch (Exception e) {
                         // Nếu lỗi khi lấy user, để currentUserId = null
                     }
+                }
+
+                // Nếu pageable có sort và direction được gửi riêng lẻ
+                if (pageable.getSort().isSorted() && direction != null) {
+                    Sort.Direction sortDirection = Sort.Direction.fromOptionalString(direction).orElse(Sort.Direction.DESC);
+                    Sort newSort = Sort.by(sortDirection, pageable.getSort().stream()
+                            .map(Sort.Order::getProperty)
+                            .toArray(String[]::new));
+                    pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
                 }
 
                 Page<ProductDTO> products = productService.searchProducts(

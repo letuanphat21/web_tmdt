@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.util.List;
 
 /**
@@ -87,6 +88,18 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(
                 HttpStatus.UNAUTHORIZED,
                 "Email hoặc mật khẩu không đúng."
+        );
+    }
+
+    /**
+     * Bắt lỗi kích thước file upload vượt quá giới hạn.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException ex) {
+        return ApiResponse.error(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "Kích thước file vượt quá giới hạn cho phép (tối đa 5MB)!"
         );
     }
 

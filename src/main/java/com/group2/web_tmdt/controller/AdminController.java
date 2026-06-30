@@ -8,6 +8,8 @@ import com.group2.web_tmdt.dto.PageResponse;
 import com.group2.web_tmdt.service.AdminService;
 import com.group2.web_tmdt.service.CategoryService;
 import com.group2.web_tmdt.service.DonHangService;
+import com.group2.web_tmdt.service.ThongKeService;
+import com.group2.web_tmdt.dto.AdminThongKeDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ public class AdminController {
     private final AdminService adminService;
     private final DonHangService donHangService;
     private final CategoryService categoryService;
+    private final ThongKeService thongKeService;
 
     // ─── User management ──────────────────────────────────────────────────────
 
@@ -192,6 +195,17 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable int id) {
         categoryService.deleteCategory(id);
         return ApiResponse.ok("Xóa danh mục thành công!", null);
+    }
+
+    /** GET /api/admin/thong-ke */
+    @GetMapping("/thong-ke")
+    public ResponseEntity<ApiResponse<AdminThongKeDTO>> getAdminThongKe(
+            @RequestParam(value = "nam", required = false) Integer nam) {
+        if (nam == null) {
+            nam = java.time.Year.now().getValue();
+        }
+        AdminThongKeDTO stats = thongKeService.getAdminThongKe(nam);
+        return ApiResponse.ok("Lấy thống kê hệ thống thành công!", stats);
     }
 
     @lombok.Data

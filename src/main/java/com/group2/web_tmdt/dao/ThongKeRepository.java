@@ -77,4 +77,34 @@ public interface ThongKeRepository extends JpaRepository<ChiTietDonHang, Long> {
             @Param("tuNgay") java.time.LocalDate tuNgay,
             @Param("denNgay") java.time.LocalDate denNgay
     );
+
+    @Query("SELECT COALESCE(SUM(dh.tongTien), 0.0) FROM DonHang dh WHERE dh.trangThaiDonHang.id = 5")
+    double countTongDoanhThu();
+
+    @Query("SELECT COUNT(dh) FROM DonHang dh")
+    long countTongDonHang();
+
+    @Query("SELECT COUNT(u) FROM User u")
+    long countTongKhachHang();
+
+    @Query("SELECT COUNT(DISTINCT p.user) FROM Product p")
+    long countTongCuaHang();
+
+    @Query("SELECT new com.group2.web_tmdt.dto.DoanhThuThangDTO(MONTH(dh.ngayTao), SUM(dh.tongTien)) " +
+           "FROM DonHang dh " +
+           "WHERE dh.trangThaiDonHang.id = 5 " +
+           "AND YEAR(dh.ngayTao) = :nam " +
+           "GROUP BY MONTH(dh.ngayTao) " +
+           "ORDER BY MONTH(dh.ngayTao) ASC")
+    List<com.group2.web_tmdt.dto.DoanhThuThangDTO> thongKeDoanhThuNamTheoThang(@Param("nam") int nam);
+
+    @Query("SELECT new com.group2.web_tmdt.dto.DoanhThuDanhMucDTO(c.tenTheLoai, SUM(ct.soLuong * ct.giaBan)) " +
+           "FROM ChiTietDonHang ct " +
+           "JOIN ct.product p " +
+           "JOIN p.category c " +
+           "JOIN ct.donHang dh " +
+           "WHERE dh.trangThaiDonHang.id = 5 " +
+           "AND YEAR(dh.ngayTao) = :nam " +
+           "GROUP BY c.tenTheLoai")
+    List<DoanhThuDanhMucDTO> thongKeDoanhThuNamTheoDanhMuc(@Param("nam") int nam);
 }

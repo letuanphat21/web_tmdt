@@ -65,6 +65,7 @@ public class Endpoints {
         public static final String[] ADMIN_GET_ENDPOINTS = new String[] {
                 "/api/products/pending",
                 "/api/products/admin",
-                "/api/products/*"
+                "/api/products/*",
+                "/api/admin/thong-ke"
         };
 }

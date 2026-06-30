@@ -12,4 +12,6 @@ public interface ThongKeService {
     List<DoanhThuDanhMucDTO> getDoanhThuTheoDanhMuc(int maSeller, int thang, int nam);
     List<DoanhThuNgayDTO> getDoanhThuTheoKhoangNgay(int maSeller, LocalDate tuNgay, LocalDate denNgay);
     List<DoanhThuDanhMucDTO> getDoanhThuTheoDanhMucKhoangNgay(int maSeller, LocalDate tuNgay, LocalDate denNgay);
+
+    com.group2.web_tmdt.dto.AdminThongKeDTO getAdminThongKe(int nam);
 }

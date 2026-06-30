@@ -94,4 +94,26 @@ public class EmailServiceImpl implements EmailService {
         );
         mailSender.send(message);
     }
+
+    @Async
+    @Override
+    public void guiEmailHuyDonHangChoBuyer(String buyerEmail, String buyerName,
+                                            int maDonHang, String tenShop,
+                                            String lyDoHuy, String chiTietSanPham) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(buyerEmail);
+        message.setSubject("[OReMA] Đơn hàng #" + maDonHang + " đã bị hủy bởi người bán");
+        message.setText(
+                "Xin chào " + buyerName + ",\n\n" +
+                "Đơn hàng #" + maDonHang + " của bạn tại cửa hàng \"" + tenShop + "\" đã bị người bán hủy.\n\n" +
+                "============================================\n" +
+                "LÝ DO HỦY: " + lyDoHuy + "\n" +
+                "============================================\n\n" +
+                "CHI TIẾT ĐƠN HÀNG:\n" +
+                chiTietSanPham + "\n" +
+                "Trân trọng,\n" +
+                "OReMA Team"
+        );
+        mailSender.send(message);
+    }
 }

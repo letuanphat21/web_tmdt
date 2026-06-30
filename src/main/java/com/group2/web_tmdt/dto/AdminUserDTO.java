@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +20,5 @@ public class AdminUserDTO {
     private Character gioiTinh;
     private LocalDate ngaySinh;
     private Integer trangThai; // 1 = active, 0 = inactive
+    private List<String> roles;
 }

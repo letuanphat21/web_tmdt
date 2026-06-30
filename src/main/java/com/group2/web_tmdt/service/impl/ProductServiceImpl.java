@@ -78,9 +78,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
+    public Page<ProductDTO> searchProducts(String keyword, List<Integer> categoryId, List<Integer> statusId, 
                                            Double minPrice, Double maxPrice, Long currentUserId, Pageable pageable) {
-        return productRepository.searchProducts(keyword, categoryId, statusId, minPrice, maxPrice, currentUserId, pageable)
+        List<Integer> categoryFilter = (categoryId == null || categoryId.isEmpty()) ? null : categoryId;
+        List<Integer> statusFilter = (statusId == null || statusId.isEmpty()) ? null : statusId;
+
+        return productRepository.searchProducts(keyword, categoryFilter, statusFilter, minPrice, maxPrice, currentUserId, pageable)
                 .map(this::convertToDTO);
     }
 

@@ -98,10 +98,18 @@ public class AdminServiceImpl implements AdminService {
         user.setDaKichHoat(true); // Kích hoạt ngay khi Admin tạo
         user.setNgayDangKy(LocalDateTime.now());
 
-        // Gán quyền ROLE_USER mặc định
-        Role roleUser = roleRepository.findByTenQuyen("ROLE_USER").orElse(null);
-        if (roleUser != null) {
-            user.setRoles(List.of(roleUser));
+        // Gán quyền tương ứng
+        if (userDTO.getRoles() != null && !userDTO.getRoles().isEmpty()) {
+            List<Role> roles = userDTO.getRoles().stream()
+                    .map(roleName -> roleRepository.findByTenQuyen(roleName).orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toList());
+            user.setRoles(roles);
+        } else {
+            Role roleUser = roleRepository.findByTenQuyen("ROLE_USER").orElse(null);
+            if (roleUser != null) {
+                user.setRoles(List.of(roleUser));
+            }
         }
 
         // Mã hóa mật khẩu mặc định "a1234567"
@@ -131,6 +139,15 @@ public class AdminServiceImpl implements AdminService {
         user.setBirthDay(userDTO.getNgaySinh());
         if (userDTO.getTrangThai() != null) {
             user.setActive(userDTO.getTrangThai() == 1);
+        }
+
+        // Cập nhật quyền
+        if (userDTO.getRoles() != null) {
+            List<Role> roles = userDTO.getRoles().stream()
+                    .map(roleName -> roleRepository.findByTenQuyen(roleName).orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toList());
+            user.setRoles(roles);
         }
 
         User updatedUser = userRepository.save(user);
@@ -166,6 +183,12 @@ public class AdminServiceImpl implements AdminService {
         dto.setNgaySinh(user.getBirthDay());
         // trangThai: 1 = active, 0 = inactive
         dto.setTrangThai(user.isActive() ? 1 : 0);
+
+        if (user.getRoles() != null) {
+            dto.setRoles(user.getRoles().stream()
+                    .map(Role::getTenQuyen)
+                    .collect(Collectors.toList()));
+        }
         return dto;
     }
 }

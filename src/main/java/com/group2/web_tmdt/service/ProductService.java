@@ -37,7 +37,7 @@ public interface ProductService {
     /**
      * Tìm kiếm sản phẩm với bộ lọc kết hợp (không bao gồm sản phẩm của người dùng hiện tại)
      */
-    Page<ProductDTO> searchProducts(String keyword, Integer categoryId, Integer statusId, 
+    Page<ProductDTO> searchProducts(String keyword, List<Integer> categoryId, List<Integer> statusId, 
                                     Double minPrice, Double maxPrice, Long currentUserId, Pageable pageable);
 
 

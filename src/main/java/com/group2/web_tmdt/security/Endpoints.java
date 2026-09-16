@@ -21,7 +21,7 @@ public class Endpoints {
                         "/api/statuses/**",
                         "/api/payment/vnpay/ipn",
                         "/api/comments",// Xem bình luận không cần đăng nhập
-                        "/api/conditions"
+                        "/api/conditions",
         };
 
         public static final String[] PUBLIC_POST_ENDPOINTS = new String[] {

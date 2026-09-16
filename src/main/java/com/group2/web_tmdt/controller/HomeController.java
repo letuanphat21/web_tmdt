@@ -135,4 +135,9 @@ public class HomeController {
         }
         return ApiResponse.ok("Lấy sản phẩm của người bán thành công!", products);
     }
+
+    @GetMapping("/hello")
+    public ResponseEntity<ApiResponse<String>> getHello() {
+        return ApiResponse.ok("Hello", "Hello from HomeController!");
+    }
 }

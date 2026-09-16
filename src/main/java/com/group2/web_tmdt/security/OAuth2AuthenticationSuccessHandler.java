@@ -47,7 +47,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.addCookie(cookie);
 
         // Redirect về frontend kèm access token trong URL
-        String targetUrl = Endpoints.front_end_host + "/?token=" + accessToken;
+        String targetUrl = Endpoints.FRONT_END_HOSTS + "/?token=" + accessToken;
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

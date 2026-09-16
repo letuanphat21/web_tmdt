@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RequestMapping("/api/thong-ke")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", maxAge = 3600)
+// @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", maxAge = 3600)
 @RestController
 // ...
 public class ThongKeController {

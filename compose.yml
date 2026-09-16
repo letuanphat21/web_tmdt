@@ -32,3 +32,4 @@ services:
 
 volumes:
   db-data:
+  name: build-spring-boot-mysql-data

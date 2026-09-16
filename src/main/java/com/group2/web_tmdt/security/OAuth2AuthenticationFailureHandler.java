@@ -25,7 +25,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         String encodedMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
 
         // Redirect về trang login kèm thông báo lỗi trong query param
-        String targetUrl = Endpoints.front_end_host + "/login?error=" + encodedMessage;
+        String targetUrl = Endpoints.FRONT_END_HOSTS + "/login?error=" + encodedMessage;
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

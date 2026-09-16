@@ -8,6 +8,7 @@ import com.group2.web_tmdt.dto.UserProfileResponse;
 import com.group2.web_tmdt.entity.Role;
 import com.group2.web_tmdt.entity.User;
 import com.group2.web_tmdt.exception.BusinessException;
+import com.group2.web_tmdt.mapper.UserProfileMapper;
 import com.group2.web_tmdt.service.UserService;
 import lombok.RequiredArgsConstructor;
 import com.group2.web_tmdt.service.EmailService;
@@ -31,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final UserProfileMapper userProfileMapper;
 
     @Override
     public void register(RegisterRequest request) {
@@ -219,7 +221,7 @@ public class UserServiceImpl implements UserService {
     public UserProfileResponse getProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng với email: " + email));
-        return mapToProfileResponse(user);
+        return userProfileMapper.toDTO(user);
     }
 
     @Override
@@ -253,29 +255,9 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
-        return mapToProfileResponse(user);
+        return userProfileMapper.toDTO(user);
     }
 
-    // ----------------------------------------------------------------
-    // Helper
-    // ----------------------------------------------------------------
 
-    private UserProfileResponse mapToProfileResponse(User user) {
-        UserProfileResponse res = new UserProfileResponse();
-        res.setMaNguoiDung(user.getMaNguoiDung());
-        res.setEmail(user.getEmail());
-        res.setHoDem(user.getHoDem());
-        res.setTen(user.getTen());
-        res.setSoDienThoai(user.getSoDienThoai());
-        res.setDiaChi(user.getDiaChi());
-        res.setGioiTinh(user.getGioiTinh());
-        res.setAvatar(user.getAvatar());
-        res.setHobby(user.getHobby());
-        res.setGoogleId(user.getGoogleId());
-        res.setBirthDay(user.getBirthDay());
-        res.setNgayDangKy(user.getNgayDangKy());
-        res.setThoiGianChinhSua(user.getThoiGianChinhSua());
-        return res;
-    }
 }
 

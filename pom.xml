@@ -30,6 +30,12 @@
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
+
+    	<dependency>
+    		<groupId>org.springframework.boot</groupId>
+    		<artifactId>spring-boot-starter-actuator</artifactId>
+    	</dependency>
+
 		<!-- WebSocket STOMP -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -110,6 +116,16 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<!-- Source: https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
@@ -144,6 +160,36 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<excludes>
+						<exclude>com/group2/web_tmdt/dto/**</exclude>
+						<exclude>com/group2/web_tmdt/entity/**</exclude>
+						<exclude>com/group2/web_tmdt/mapper/**</exclude>
+						<exclude>com/group2/web_tmdt/config/**</exclude>
+						<exclude>com/group2/web_tmdt/filter/**</exclude>
+						<exclude>com/group2/web_tmdt/websocket/dto/**</exclude>
+						<exclude>com/group2/web_tmdt/websocket/mapper/**</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

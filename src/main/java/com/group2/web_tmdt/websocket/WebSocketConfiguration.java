@@ -32,7 +32,8 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // /portfolio is the HTTP URL for the endpoint to which a WebSocket (or SockJS)
         // client needs to connect for the WebSocket handshake
-        registry.addEndpoint("/app_socket").setAllowedOrigins("http://localhost:5173");
+        registry.addEndpoint("/app_socket")
+                .setAllowedOriginPatterns("http://localhost:5173", "https://*.ngrok-free.app","https://web-tmdt-frontend.vercel.app","https://www.orema.io.vn");
     }
 
     @Override

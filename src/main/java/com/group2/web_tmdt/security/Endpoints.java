@@ -1,7 +1,14 @@
 package com.group2.web_tmdt.security;
 
+import java.util.List;
+
 public class Endpoints {
-    public static final String front_end_host = "http://localhost:5173";
+    public static final List<String> FRONT_END_HOSTS = List.of(
+    "http://localhost:5173", 
+    "https://*.ngrok-free.app",
+    "https://web-tmdt-frontend.vercel.app",
+    "https://www.orema.io.vn"
+);
 
         public static final String[] PUBLIC_GET_ENDPOINTS = new String[] {
                         "/api/auth/kich-hoat",

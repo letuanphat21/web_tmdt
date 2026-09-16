@@ -140,4 +140,8 @@ public class HomeController {
     public ResponseEntity<ApiResponse<String>> getHello() {
         return ApiResponse.ok("Hello", "Hello from HomeController!");
     }
+    @GetMapping("/hello2")
+    public ResponseEntity<ApiResponse<String>> getHello2() {
+        return ApiResponse.ok("Hello", "Hello from HomeController2!");
+    }
 }

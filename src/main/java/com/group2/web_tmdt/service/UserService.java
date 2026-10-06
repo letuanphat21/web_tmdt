@@ -35,4 +35,6 @@ public interface UserService extends UserDetailsService {
     UserProfileResponse getProfile(String email);
 
     UserProfileResponse updateProfile(String email, UpdateProfileRequest request);
+
+    
 }

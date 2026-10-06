@@ -121,10 +121,10 @@ public class AuthController {
             return ApiResponse.error(HttpStatus.UNAUTHORIZED, "Refresh token không hợp lệ hoặc đã hết hạn.");
         }
     }
-    // @GetMapping("/test-token")
-    // public ResponseEntity<ApiResponse<Void>> test(){
-    // return ApiResponse.ok("rất thành công");
-    // }
+    @GetMapping("/test-token")
+    public ResponseEntity<ApiResponse<Void>> test(){
+    return ApiResponse.ok("rất thành công");
+    }
 
     /**
      * POST /api/auth/dang-xuat

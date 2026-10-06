@@ -80,6 +80,7 @@ public class UserServiceTest {
         Assertions.assertEquals(registerRequest.getEmail(), savedUser.getEmail());
         Assertions.assertFalse(savedUser.isDaKichHoat());
         Assertions.assertTrue(savedUser.isActive());
+        Assertions.assertEquals("encoderPassword", savedUser.getMatKhau());
 
         verify(emailService)
                 .guiEmailKichHoat(eq(registerRequest.getEmail()), anyString());
